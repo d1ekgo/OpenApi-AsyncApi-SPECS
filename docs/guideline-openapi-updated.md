@@ -108,9 +108,16 @@ Los headers corporativos obligatorios deben definirse una única vez en `compone
 
 ---
 
-## Criterios de Aceptación
-| Estado | Resultado | Condición |
-|---|:---:|---|
-| **APROBADO** | Cumple | 0 errores |
-| **CON OBSERVACIONES** | Cumple | 0 errores y ≥1 warning |
-| **RECHAZADO** | No cumple | ≥1 error |
+### Criterios de Aceptación y Validación
+
+El nuevo modelo de validación se basa en un enfoque de cumplimiento estricto. Para que un archivo AsyncAPI sea aceptado en el ecosistema de la organización, debe cumplir con los siguientes criterios.
+
+### Estados de Validación
+
+El validador arrojará uno de los siguientes tres estados finales. Actualmente, el pipeline está configurado en modo **Informativo** para los errores.
+
+| Estado | Resultado | Criterio Técnico | Acción en Pipeline |
+| :--- | :---: | :--- | :--- |
+| **✅ APROBADO** | **CUMPLE** | **0** Errores <br> **0** Advertencias | **Continuar.** <br> El documento se procesa y despliega automáticamente. |
+| **⚠️ CON OBSERVACIONES** | **CUMPLE** | **0** Errores <br> **≥1** Advertencias | **Continuar.** <br> Se permite el despliegue, pero se notifica al equipo para futuras correcciones. |
+| **⛔ RECHAZADO** | **NO CUMPLE** | **≥1** Errores | **Continuar (Con Alerta).** <br> El documento es inválido y contiene errores bloqueantes. Se publica el reporte en el PR pero **NO se detiene**. |
