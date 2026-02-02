@@ -110,7 +110,7 @@ Los headers corporativos obligatorios deben definirse una única vez en `compone
 
 ### Criterios de Aceptación y Validación
 
-El nuevo modelo de validación se basa en un enfoque de cumplimiento estricto. Para que un archivo AsyncAPI sea aceptado en el ecosistema de la organización, debe cumplir con los siguientes criterios.
+El nuevo modelo de validación se basa en un enfoque de cumplimiento estricto. Para que un archivo OpenApi sea aceptado en el ecosistema de la organización, debe cumplir con los siguientes criterios.
 
 ### Estados de Validación
 
