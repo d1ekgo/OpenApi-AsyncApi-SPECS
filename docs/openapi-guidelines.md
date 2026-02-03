@@ -79,6 +79,7 @@ Los headers corporativos garantizan la trazabilidad cross-platform. Deben defini
 | **Sufijo Code** | ⛔ Error | Cualquier propiedad que represente un código clasificatorio o de negocio debe finalizar obligatoriamente con el sufijo `Code` (ej. `currencyCode`). |
 | **Uso de Acrónimos** | ⚠️ Warning | Se recomienda evitar el uso de acrónimos crípticos; los nombres deben ser descriptivos para mejorar la legibilidad del contrato. |
 | **Palabras Reservadas** | ⛔ Error | Prohibido el uso de términos reservados por lenguajes de programación en nombres de propiedades: `message`, `body`, `payload`, `class`, `default`, `function`. |
+| **Campos y propiedades en inglés** | ⛔ Error | Todas las llaves de schemas, parámetros y properties deben estar en inglés. El contenido puede estar en español. Se permite el uso de `info`. |
 
 ---
 
