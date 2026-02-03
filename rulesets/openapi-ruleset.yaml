@@ -1,0 +1,148 @@
+extends: ["spectral:oas"]
+
+formats:
+  - oas3
+
+rules:
+  # ---------------------------------------------------------------------------
+  # REGLAS DE ESTRUCTURA (Bloqueantes)
+  # ---------------------------------------------------------------------------
+
+  # Regla: ID de la API en Descripción (URL de GitHub)
+  api-id-in-description:
+    description: "El campo info.description debe contener la URL del repositorio GitHub del proyecto."
+    severity: error
+    given: "$.info"
+    then:
+      field: "description"
+      function: pattern
+      functionOptions:
+        match: "https://github\\.com/.*"
+
+  # Regla: Título descriptivo (> 10 chars)
+  api-title-length:
+    description: "El título de la API debe tener más de 10 caracteres."
+    severity: error
+    given: "$.info"
+    then:
+      field: "title"
+      function: length
+      functionOptions:
+        min: 11
+
+  # Regla: Versión de OpenAPI (3.0 en adelante)
+  openapi-version-check:
+    description: "La especificación debe usar una versión compatible de OpenAPI (3.x)."
+    severity: error
+    given: "$"
+    then:
+      field: "openapi"
+      function: pattern
+      functionOptions:
+        match: "^3\\..*"
+
+  # Regla: Schema de nivel superior (Request/Response) debe ser Object
+  top-level-schema-object:
+    description: "Los esquemas utilizados como raíz en requestBody o responses deben ser de tipo 'object'."
+    severity: error
+    given:
+      - "$.paths..requestBody.content.*.schema"
+      - "$.paths..responses[?(@property >= 200 && @property < 300)].content.*.schema"
+    then:
+      field: "type"
+      function: pattern
+      functionOptions:
+        match: "^object$"
+
+  # Regla: Booleans no nulos
+  boolean-no-null:
+    description: "Los campos de tipo boolean no pueden ser nullable."
+    severity: error
+    given: "$..[?(@.type == 'boolean')]"
+    then:
+      field: "nullable"
+      function: falsy
+
+  # ---------------------------------------------------------------------------
+  # REGLAS DE HEADERS (Modo Estricto: Referencias Obligatorias)
+  # ---------------------------------------------------------------------------
+
+  # Esta regla verifica que TODAS las operaciones incluyan las referencias a los headers obligatorios.
+  headers-mandatory-refs:
+    description: "Todas las operaciones deben referenciar los headers corporativos (eventId, eventType, etc) mediante $ref."
+    severity: error
+    given: "$.paths.*[get,post,put,delete,patch]"
+    then:
+      field: "parameters"
+      function: schema
+      functionOptions:
+        schema:
+          type: "array"
+          allOf:
+            - contains: { properties: { $ref: { const: "#/components/parameters/eventId" } }, required: ["$ref"] }
+            - contains: { properties: { $ref: { const: "#/components/parameters/eventType" } }, required: ["$ref"] }
+            - contains: { properties: { $ref: { const: "#/components/parameters/entityId" } }, required: ["$ref"] }
+            - contains: { properties: { $ref: { const: "#/components/parameters/entityType" } }, required: ["$ref"] }
+            - contains: { properties: { $ref: { const: "#/components/parameters/timestamp" } }, required: ["$ref"] }
+            - contains: { properties: { $ref: { const: "#/components/parameters/datetime" } }, required: ["$ref"] }
+
+  # Regla: Definición de Headers en Components
+  headers-definitions-exist:
+    description: "Los headers corporativos deben estar definidos en components.parameters."
+    severity: error
+    given: "$.components.parameters"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required: ["eventId", "eventType", "entityId", "entityType", "timestamp", "datetime"]
+
+  # ---------------------------------------------------------------------------
+  # REGLAS DE NOMENCLATURA
+  # ---------------------------------------------------------------------------
+
+  # Regla: lowerCamelCase
+  properties-lower-camel-case:
+    description: "Las propiedades y parámetros deben seguir lowerCamelCase."
+    severity: error
+    given: 
+      - "$..properties"
+      - "$.components.parameters"
+    then:
+      field: "@key"
+      function: casing
+      functionOptions:
+        type: camel
+
+  # Regla: Arrays en plural
+  arrays-plural-s:
+    description: "Las propiedades de tipo array deben terminar en 's'."
+    severity: warning
+    given: "$..properties[?(@.type == 'array')]"
+    then:
+      field: "@key"
+      function: pattern
+      functionOptions:
+        match: ".*s$"
+
+  # Regla: Claves sin números al inicio
+  keys-no-start-number:
+    description: "Las claves no pueden comenzar con números."
+    severity: error
+    given: "$..properties"
+    then:
+      field: "@key"
+      function: pattern
+      functionOptions:
+        match: "^[^0-9]"
+
+  # Regla: Palabras Reservadas
+  no-reserved-words:
+    description: "Prohibido usar: message, body, payload, class, default, function."
+    severity: error
+    given: "$..properties"
+    then:
+      field: "@key"
+      function: undefined
+      functionOptions:
+        notMatch: "^(message|body|payload|class|default|function)$"
