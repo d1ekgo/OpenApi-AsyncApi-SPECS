@@ -150,6 +150,6 @@ rules:
     given: "$..properties"
     then:
       field: "@key"
-      function: undefined
+      function: pattern
       functionOptions:
         notMatch: "^(message|body|payload|class|default|function)$"
