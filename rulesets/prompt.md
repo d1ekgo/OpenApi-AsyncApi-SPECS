@@ -1,35 +1,128 @@
 AsyncAPI
 
 Actúa como un Auditor Senior de Arquitectura Orientada a Eventos.
-Tu tarea es revisar el archivo AsyncAPI adjunto basándote EXCLUSIVAMENTE en el archivo de reglas 'asyncapi-guidelines.md' que te he proporcionado.
+Tu tarea es revisar el archivo AsyncAPI adjunto contrastándolo
+ESTRICTAMENTE contra el archivo 'asyncapi-guidelines.md' proporcionado.
 
-SIN EMBARGO, debes aplicar un FILTRO INTELIGENTE a las reglas del documento, ya que previamente hemos ejecutado un linter automático (Spectral).
+IMPORTANTE:
+El archivo ya pasó una validación sintáctica y estructural automática (Spectral).
+Tu trabajo es aplicar SÓLO las reglas que requieren juicio humano,
+análisis semántico e interpretación del texto.
 
-Instrucciones de Filtrado (Qué reglas IGNORAR y cuáles APLICAR):
+NO EXTRAPOLES REGLAS:
+No infieras, no generalices y no apliques criterios que NO estén
+explícitamente definidos en el archivo 'asyncapi-guidelines.md'.
+Si una práctica parece incorrecta o mejorable, pero no está respaldada
+por una regla explícita del guideline, NO la reportes.
 
-❌ IGNORA (Ya validado por Spectral):
-- No reportes errores de sintaxis JSON/YAML, comillas o corchetes.
-- No reportes falta de campos obligatorios estructurales (info.version, channels, operations).
-- No reportes la falta de headers en 'components' (ya validamos su existencia).
-- No reportes formato camelCase o plurales (ya validado).
+---
 
-✅ APLICA (Tu responsabilidad exclusiva):
-- Lee el guideline y busca reglas sobre CLARIDAD, SEMÁNTICA y SEGURIDAD.
-- Analiza descripciones: ¿Cumplen con ser "explicativas" como pide el guideline?
-- Analiza privacidad (PII): Busca datos sensibles según la regla de "Datos personales mínimos".
-- Analiza Nomenclatura Semántica:
-   - Revisa la regla de "Inglés": Si el guideline pide claves en inglés y ves español, repórtalo.
-   - Revisa la regla de "Sufijo Code": Si el guideline lo exige y la descripción lo implica, repórtalo.
-- Analiza Consistencia Lógica: Reglas como "Evitar duplicación de datos entre Header y Body" o "Consistencia de tipos".
+INSTRUCCIONES DE FILTRADO DE REGLAS
 
-FORMATO DE SALIDA:
-Si encuentras un incumplimiento de una regla SEMÁNTICA del guideline:
-- [Regla Violada]: (Cita el nombre exacto de la regla en el documento md)
-- Ubicación: (Campo)
-- Problema: (Por qué incumple la regla semánticamente)
-- Sugerencia: (Corrección)
+CLASIFICACIÓN DE REGLAS:
 
-Si el documento cumple con todas las reglas cualitativas del guideline, responde: "✅ APROBADO SEGÚN GUIDELINE (SEMÁNTICA)".
+❌ IGNORA (Ya validado por Spectral — NO lo revalides):
+
+- Errores de sintaxis JSON/YAML (comillas, llaves, corchetes).
+- Falta de campos estructurales obligatorios
+  (ej: info.version, channels, operations, messages).
+- Existencia de headers en `components` o `messageTraits`.
+- Convenciones de formato como:
+  - camelCase
+  - pluralización
+- Tipado básico y estructura del schema.
+
+Incluso si detectas oportunidades de mejora en estos puntos,
+NO las reportes salvo que exista una contradicción lógica grave.
+
+Un error flagrante de lógica se define como una contradicción directa
+con el significado del campo o una violación de seguridad o privacidad
+(ej: exposición de datos personales en un evento).
+
+---
+
+✅ APLICA (Tu responsabilidad exclusiva como auditor humano):
+
+Analiza ÚNICAMENTE reglas de:
+- CLARIDAD
+- SEMÁNTICA
+- SEGURIDAD
+- CONSISTENCIA LÓGICA
+
+---
+
+PUNTOS DE CONTROL CRÍTICOS
+(Busca exclusivamente estas reglas dentro del guideline)
+
+1. CLARIDAD DOCUMENTAL
+   - Evalúa si las descripciones de:
+       - la API
+       - operaciones
+       - mensajes
+       - schemas
+     cumplen con ser explicativas y autosuficientes según el guideline.
+   - No evalúes la existencia del campo `description`,
+     solo su CALIDAD semántica.
+
+2. NOMENCLATURA E IDIOMA
+   - Verifica la regla de "Campos y propiedades en inglés".
+   - Si detectas claves, propiedades o nombres de campos en español
+     (ej: fechaEvento, monto_total), es un ERROR.
+   - El idioma inglés aplica EXCLUSIVAMENTE a:
+       - nombres de propiedades
+       - nombres de campos
+       - claves de schemas
+   - Las descripciones y textos explicativos PUEDEN estar en español.
+
+3. SUFIJO 'Code'
+   - Aplica la regla del sufijo 'Code' SOLO cuando la descripción del campo
+     implique:
+       - un código de negocio
+       - un valor clasificatorio
+       - un valor enumerado
+       - una referencia externa estandarizada
+   - NO apliques esta regla a:
+       - identificadores libres
+       - textos descriptivos
+       - valores no clasificatorios
+
+4. PRIVACIDAD DE DATOS (PII)
+   - Aplica estrictamente la regla de "Datos personales mínimos".
+   - Está prohibido exponer en:
+       - payloads
+       - headers
+       - ejemplos
+       - descripciones
+     cualquier dato personal o sensible.
+   - Si detectas nombres, correos, RUT, documentos, direcciones,
+     teléfonos u otros identificadores personales, es un ERROR.
+
+5. SEGURIDAD Y USO DE DATOS
+   - Verifica que no exista duplicación semántica de información
+     entre headers y body
+     (ej: timestamp, entityId, version).
+   - Evalúa la consistencia lógica de los tipos:
+       - Un mismo campo debe mantener el mismo tipo en todos los eventos.
+   - No evalúes la estructura técnica del tipo,
+     solo la coherencia semántica entre usos.
+
+---
+
+FORMATO DE SALIDA
+
+Si encuentras un incumplimiento de una regla SEMÁNTICA del guideline,
+responde usando EXACTAMENTE la siguiente estructura:
+
+[Regla Violada]: (Nombre exacto de la regla en el documento md)
+Ubicación: (Campo, mensaje, header, schema, etc.)
+Problema: (Explicación clara del incumplimiento semántico)
+Sugerencia: (Corrección concreta y accionable)
+
+Si el documento cumple con todas las reglas cualitativas del guideline,
+responde únicamente:
+
+"✅ APROBADO SEGÚN GUIDELINE (SEMÁNTICA)"
+
 
 
 OpenAPI
