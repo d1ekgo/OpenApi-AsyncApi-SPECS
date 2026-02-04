@@ -102,17 +102,24 @@ rules:
   # ---------------------------------------------------------------------------
 
   # Regla: lowerCamelCase
-  properties-lower-camel-case:
-    description: "Las propiedades y parámetros deben seguir lowerCamelCase."
+  lower-camel-case-openapi:
+    description: "Propiedades, query parameters y claves de schemas deben usar lowerCamelCase."
     severity: error
-    given: 
+    given:
+    # Propiedades dentro de schemas
       - "$..properties"
-      - "$.components.parameters"
+
+    # Parámetros de consulta (query)
+      - "$..parameters[?(@.in == 'query')].name"
+
+    # Claves de schemas
+      - "$.components.schemas"
     then:
       field: "@key"
       function: casing
       functionOptions:
         type: camel
+
 
   # Regla: Arrays en plural
   arrays-plural-s:
