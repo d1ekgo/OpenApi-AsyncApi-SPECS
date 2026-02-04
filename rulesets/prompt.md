@@ -49,7 +49,7 @@ Instrucciones de lectura del Guideline:
    - Nomenclatura e Idioma: Verifica la regla de "Idioma Inglés" y "Acrónimos" definida en el guideline. Si ves claves en español (`fecha_inicio`), es un ERROR.
      El idioma inglés aplica exclusivamente a nombres de claves, parámetros y propiedades; las descripciones y textos explicativos pueden estar en español.
    - Claridad: Evalúa si 'info.description' y los 'summary' cumplen con el estándar de calidad descrito en la sección "Reglas de Claridad".
-   - Sufijo Code: Aplica la regla de nomenclatura sobre sufijos 'Code' basándote en el contexto de la descripción del campo.
+   - Sufijo Code: Solo aplica la regla del sufijo Code cuando la descripción implique un valor clasificatorio, enumerado o de referencia externa, no cuando sea un identificador libre o texto descriptivo.
    - Seguridad: Aplica estrictamente las reglas de "Privacidad de Datos (PII)" y "Seguridad en Errores".
 
 FORMATO DE SALIDA:
