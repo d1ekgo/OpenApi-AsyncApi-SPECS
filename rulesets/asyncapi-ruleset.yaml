@@ -147,15 +147,19 @@ rules:
   # ---------------------------------------------------------------------------
 
   # Regla: lowerCamelCase
-  properties-lower-camel-case:
-    description: "Las propiedades deben seguir la convención lowerCamelCase."
+  properties-and-messages-lower-camel-case:
+    description: "Los nombres de campos, propiedades y mensajes deben usar lowerCamelCase."
     severity: error
-    given: "$..properties"
+    given:
+      - "$..properties"
+      - "$.components.messages"
+      - "$.channels..messages"
     then:
       field: "@key"
       function: casing
       functionOptions:
         type: camel
+
 
   # Regla: Arrays en plural
   arrays-plural-s:
