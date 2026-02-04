@@ -9,15 +9,15 @@ rules:
   # ---------------------------------------------------------------------------
 
   # Regla: ID de la API en Descripción (URL de GitHub)
-  api-id-in-description:
-    description: "El campo info.description debe contener la URL del repositorio GitHub del proyecto."
+  api-x-api-id-git-url:
+    description: "info.x-api-id must be a valid Git repository URL"
     severity: error
-    given: "$.info"
+    given: $.info.x-api-id
     then:
-      field: "description"
       function: pattern
       functionOptions:
-        match: "https://github\\.com/.*"
+        match: "^(https://)(github|gitlab|bitbucket)\\.com/.+/.+$"
+
 
   # Regla: Título descriptivo (> 10 chars)
   api-title-length:
