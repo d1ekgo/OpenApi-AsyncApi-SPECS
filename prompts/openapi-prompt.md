@@ -130,28 +130,85 @@ CRITERIOS DE SEVERIDAD (PARA MÉTRICAS):
 
 ---
 
-FORMATO DE SALIDA (OBLIGATORIO)
+## MÉTRICAS DE COPILOT (OBLIGATORIO)
 
-Antes de los hallazgos, reporta SIEMPRE las métricas:
+Antes de listar los hallazgos, DEBES reportar:
 
-### MÉTRICAS:
-- copilotErrors: <número>
-- copilotWarnings: <número>
+- **copilotErrors**: número total de errores semánticos detectados.
+- **copilotWarnings**: número total de advertencias semánticas detectadas.
 
-### HALLAZGOS:
+Estos valores DEBEN ser explícitos y numéricos.
 
-Por cada incumplimiento SEMÁNTICO del guideline, responde usando
-EXACTAMENTE la siguiente estructura:
+---
+
+## HALLAZGOS SEMÁNTICOS
+
+Por cada incumplimiento del guideline, responde usando EXACTAMENTE
+la siguiente estructura:
 
 [Regla del Guideline]: (Nombre exacto de la regla en el archivo)
 Severidad: (La que indique el archivo md para esa regla)
 Hallazgo: (Explicación detallada del problema semántico)
 Acción sugerida: (Cómo corregirlo de forma concreta)
 
-Si NO existen incumplimientos semánticos, responde ÚNICAMENTE:
+Si NO existen incumplimientos semánticos, responde:
 
 ### MÉTRICAS:
 - copilotErrors: 0
 - copilotWarnings: 0
 
-"✅ APROBADO SEGÚN GUIDELINE (SEMÁNTICA)"
+---
+
+## CÁLCULO DEL ESTADO DE VALIDACIÓN (OBLIGATORIO)
+
+Recibirás como contexto externo:
+
+- spectralErrors
+- spectralWarnings
+
+Debes calcular:
+
+- totalErrors = spectralErrors + copilotErrors
+- totalWarnings = spectralWarnings + copilotWarnings
+
+Aplica ESTRICTAMENTE la siguiente lógica:
+
+- Si totalErrors ≥ 1  
+  → Estado: ⛔ RECHAZADO  
+  → Resultado: NO CUMPLE
+
+- Si totalErrors = 0 y totalWarnings ≥ 1  
+  → Estado: ⚠️ CON OBSERVACIONES  
+  → Resultado: CUMPLE
+
+- Si totalErrors = 0 y totalWarnings = 0  
+  → Estado: ✅ APROBADO  
+  → Resultado: CUMPLE
+
+El pipeline es INFORMATIVO y NO BLOQUEANTE.
+
+---
+
+## 📌 Estado de Validación (FORMATO FINAL OBLIGATORIO)
+
+```md
+## 📌 Estado de Validación
+
+- **Estado:** [✅ APROBADO | ⚠️ CON OBSERVACIONES | ⛔ RECHAZADO]
+- **Resultado:** [CUMPLE | NO CUMPLE]
+
+### 📊 Métricas
+
+- **Spectral**
+  - Errores: X
+  - Advertencias: Y
+
+- **Copilot**
+  - Errores: A
+  - Advertencias: B
+
+- **Totales**
+  - Errores: E
+  - Advertencias: W
+
+**Modo del pipeline:** Informativo (no bloqueante)
