@@ -47,6 +47,7 @@ Instrucciones de lectura del Guideline:
 
 2. PUNTOS DE CONTROL CRÍTICOS (Busca estas reglas en el documento):
    - Nomenclatura e Idioma: Verifica la regla de "Idioma Inglés" y "Acrónimos" definida en el guideline. Si ves claves en español (`fecha_inicio`), es un ERROR.
+     El idioma inglés aplica exclusivamente a nombres de claves, parámetros y propiedades; las descripciones y textos explicativos pueden estar en español.
    - Claridad: Evalúa si 'info.description' y los 'summary' cumplen con el estándar de calidad descrito en la sección "Reglas de Claridad".
    - Sufijo Code: Aplica la regla de nomenclatura sobre sufijos 'Code' basándote en el contexto de la descripción del campo.
    - Seguridad: Aplica estrictamente las reglas de "Privacidad de Datos (PII)" y "Seguridad en Errores".
