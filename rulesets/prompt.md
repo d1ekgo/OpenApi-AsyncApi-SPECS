@@ -51,6 +51,7 @@ Instrucciones de lectura del Guideline:
    - Claridad: Evalúa si 'info.description' y los 'summary' cumplen con el estándar de calidad descrito en la sección "Reglas de Claridad".
    - Sufijo Code: Solo aplica la regla del sufijo Code cuando la descripción implique un valor clasificatorio, enumerado o de referencia externa, no cuando sea un identificador libre o texto descriptivo.
    - Seguridad: Aplica estrictamente las reglas de "Privacidad de Datos (PII)" y "Seguridad en Errores".
+   - Presta especial atención a schemas de respuestas 4xx y 5xx; ningún mensaje de error debe incluir datos personales, internos o trazas técnicas.
 
 FORMATO DE SALIDA:
 - [Regla del Guideline]: (Nombre exacto de la regla en el archivo)
