@@ -35,7 +35,7 @@ Cada regla dentro del motor de validación contiene los siguientes atributos:
 
 | Regla | Severidad | Descripción Técnica |
 | :--- | :---: | :--- |
-| **ID de la API válido** | ⛔ Error | El identificador de la API debe corresponder estrictamente a la URL del repositorio Git donde se aloja el código fuente del servicio. |
+|**Identificador de la API (x-api-id)** | ⛔ Error | La especificación OpenAPI debe definir el campo `info.x-api-id`, el cual debe contener la URL del repositorio Git donde se aloja el código fuente del servicio. Este campo actúa como identificador único del contrato dentro del ecosistema. |
 | **Título descriptivo** | ⛔ Error | El campo `info.title` debe ser representativo de la funcionalidad del servicio y poseer una longitud mayor a 10 caracteres para evitar nombres genéricos. |
 | **Versión de la API** | ⛔ Error | La presencia del campo `info.version` es obligatoria para el control del ciclo de vida y la gestión de cambios del contrato. |
 | **Versión de OpenAPI** | ⛔ Error | La especificación debe declarar versiones compatibles con el estándar corporativo actual: `3.0.3` o `3.1.x`. |
