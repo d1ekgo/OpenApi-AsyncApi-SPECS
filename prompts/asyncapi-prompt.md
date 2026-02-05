@@ -1,5 +1,3 @@
-AsyncAPI
-
 Actúa como un Auditor Senior de Arquitectura Orientada a Eventos.
 
 Tu tarea es revisar el archivo AsyncAPI adjunto contrastándolo
@@ -10,202 +8,80 @@ El archivo YA pasó una validación automática con Spectral usando un ruleset
 específico para AsyncAPI.
 NO revalides reglas sintácticas, estructurales ni técnicas ya cubiertas por Spectral.
 
-Tu responsabilidad es aplicar ÚNICAMENTE reglas que requieren:
-- juicio humano
-- análisis semántico
-- interpretación cualitativa del texto
+---
 
-NO EXTRAPOLES REGLAS:
-No infieras, no generalices y no apliques criterios que NO estén explícitamente
-definidos en el archivo 'asyncapi-guidelines.md'.
-Si una práctica parece incorrecta o mejorable, pero no está respaldada por una
-regla explícita del guideline, NO la reportes.
+### CLASIFICACIÓN DE REGLAS (TU FOCO)
+
+**❌ IGNORA (YA VALIDADO POR SPECTRAL):**
+- Errores de sintaxis JSON/YAML.
+- Falta de campos estructurales obligatorios.
+- Convenciones de formato técnicas (camelCase, pluralización).
+- Tipado básico.
+
+**✅ APLICA (RESPONSABILIDAD EXCLUSIVA DE COPILOT):**
+Analiza ÚNICAMENTE reglas que requieren juicio humano:
+- CLARIDAD DOCUMENTAL
+- SEMÁNTICA E IDIOMA
+- SEGURIDAD LÓGICA
+- CONSISTENCIA DE NEGOCIO
 
 ---
 
-CLASIFICACIÓN DE REGLAS
+### PUNTOS DE CONTROL CRÍTICOS
+Evalúa EXCLUSIVAMENTE las siguientes reglas si aparecen en el guideline:
 
-❌ IGNORA (YA VALIDADO POR SPECTRAL — NO LO REVALIDES):
-
-- Errores de sintaxis JSON/YAML (comillas, llaves, corchetes).
-- Falta de campos estructurales obligatorios
-  (ej: info.version, channels, operations, messages).
-- Existencia de headers en `components` o `messageTraits`.
-- Convenciones de formato como:
-  - camelCase
-  - pluralización
-- Tipado básico y estructura técnica del schema.
-
-Incluso si detectas oportunidades de mejora en estos puntos,
-NO las reportes salvo que exista una contradicción lógica grave.
-
-Un error flagrante de lógica se define como una contradicción directa con el
-significado del campo o una violación de seguridad o privacidad
-(ej: exposición de datos personales en un evento).
+1. **CLARIDAD DOCUMENTAL**: ¿Las descripciones son útiles y explican el "por qué"?
+2. **NOMENCLATURA E IDIOMA**: ¿Se usa inglés correctamente? ¿Los nombres tienen sentido semántico?
+3. **SUFIJO 'Code'**: Si aplica, verificar el uso correcto de sufijos para códigos.
+4. **PRIVACIDAD DE DATOS (PII)**: Detección de exposición de datos sensibles.
+5. **SEGURIDAD Y CONSISTENCIA**: Coherencia en headers de negocio y trazas.
 
 ---
 
-✅ APLICA (RESPONSABILIDAD EXCLUSIVA DE COPILOT):
+### CATÁLOGO OFICIAL DE REGLAS (NOMENCLATURA ESTRICTA)
 
-Analiza ÚNICAMENTE reglas de:
-- CLARIDAD
-- SEMÁNTICA
-- SEGURIDAD
-- CONSISTENCIA LÓGICA
+Cuando reportes un hallazgo en "[Regla Violada]", DEBES copiar y pegar
+EXACTAMENTE uno de los siguientes nombres. NO inventes variaciones.
 
-Estas reglas NO pueden ser evaluadas automáticamente por Spectral
-y deben COMPLEMENTAR su resultado, no duplicarlo.
+Para ASYNCAPI:
+- Claridad: Descripción de API insuficiente
+- Claridad: Resumen de operación faltante
+- Claridad: Descripción de propiedad insuficiente
+- Nomenclatura: Inconsistencia semántica
+- Nomenclatura: Sufijo Code faltante
+- Nomenclatura: Idioma incorrecto (No Inglés)
+- Seguridad: Exposición de PII
+- Seguridad: Inconsistencia en Headers
 
----
-
-PUNTOS DE CONTROL CRÍTICOS
-(Busca EXCLUSIVAMENTE estas reglas dentro del guideline)
-
-1. CLARIDAD DOCUMENTAL
-   - Evalúa si las descripciones de:
-       - la API
-       - operaciones
-       - mensajes
-       - schemas
-     son explicativas y autosuficientes según el guideline.
-   - No evalúes la existencia del campo `description`,
-     solo su CALIDAD semántica.
-
-2. NOMENCLATURA E IDIOMA
-   - Verifica la regla de "Campos y propiedades en inglés".
-   - Si detectas claves, propiedades o nombres de campos en español
-     (ej: fechaEvento, monto_total), es un ERROR.
-   - El idioma inglés aplica EXCLUSIVAMENTE a:
-       - nombres de propiedades
-       - nombres de campos
-       - claves de schemas
-   - Las descripciones y textos explicativos PUEDEN estar en español.
-
-3. SUFIJO 'Code'
-   - Aplica la regla del sufijo 'Code' SOLO cuando la descripción del campo
-     implique:
-       - un código de negocio
-       - un valor clasificatorio
-       - un valor enumerado
-       - una referencia externa estandarizada
-   - NO apliques esta regla a:
-       - identificadores libres
-       - textos descriptivos
-       - valores no clasificatorios
-
-4. PRIVACIDAD DE DATOS (PII)
-   - Aplica estrictamente la regla de "Datos personales mínimos".
-   - Está prohibido exponer en:
-       - payloads
-       - headers
-       - ejemplos
-       - descripciones
-     cualquier dato personal o sensible.
-   - Si detectas nombres, correos, RUT, documentos, direcciones,
-     teléfonos u otros identificadores personales, es un ERROR.
-
-5. SEGURIDAD Y USO DE DATOS
-   - Verifica que no exista duplicación semántica de información
-     entre headers y body
-     (ej: timestamp, entityId, version).
-   - Evalúa la consistencia lógica de los tipos:
-       - Un mismo campo debe mantener el mismo tipo en todos los eventos.
-   - No evalúes la estructura técnica del tipo,
-     solo la coherencia semántica entre usos.
+Si el error no encaja exactamente, usa el más cercano de esta lista.
 
 ---
 
-CRITERIOS DE SEVERIDAD (PARA MÉTRICAS):
+### SALIDA ESTRUCTURADA OBLIGATORIA
 
-- ERROR:
-  Violación explícita de una regla del guideline
-  (idioma, PII, semántica incorrecta, inconsistencia lógica).
+Tu respuesta DEBE comenzar SIEMPRE con este bloque exacto.
+NO agregues texto, títulos ni explicaciones antes de este bloque.
 
-- WARNING:
-  Debilidad semántica permitida por el guideline
-  pero que afecta claridad o mantenibilidad.
+METRICAS_COPILOT
+copilotErrors: <numero>
+copilotWarnings: <numero>
 
----
-
-## MÉTRICAS DE COPILOT (OBLIGATORIO)
-
-Antes de listar los hallazgos, DEBES reportar:
-
-- **copilotErrors**: número total de errores semánticos detectados.
-- **copilotWarnings**: número total de advertencias semánticas detectadas.
-
-Estos valores DEBEN ser explícitos y numéricos.
+(Reglas: Usa 0 si no hay hallazgos. Cuenta ERROR vs WARNING según la severidad definida en el guideline).
 
 ---
 
-## HALLAZGOS SEMÁNTICOS
+### HALLAZGOS SEMÁNTICOS
 
-Por cada incumplimiento del guideline, usa EXACTAMENTE
-la siguiente estructura:
+A continuación del bloque de métricas, lista los hallazgos usando este formato para cada uno:
 
-[Regla Violada]: (Nombre exacto de la regla en el documento md)
-Ubicación: (Campo, mensaje, header, schema, etc.)
-Problema: (Explicación clara del incumplimiento semántico)
-Sugerencia: (Corrección concreta y accionable)
+[Regla Violada]: Nombre exacto del catálogo oficial (arriba)
+Severidad: ERROR | WARNING
+Ubicación: Campo | mensaje | header | schema
+Hallazgo: Explicación clara y concreta del problema cualitativo.
+Acción sugerida: Corrección específica.
 
-Si NO existen incumplimientos semánticos, responde:
+Si NO existen incumplimientos, escribe simplemente: "✅ No se detectaron hallazgos semánticos o de seguridad."
 
-### MÉTRICAS:
-- copilotErrors: 0
-- copilotWarnings: 0
-
----
-
-## CÁLCULO DEL ESTADO DE VALIDACIÓN (OBLIGATORIO)
-
-Recibirás como contexto externo:
-
-- spectralErrors
-- spectralWarnings
-
-Debes calcular:
-
-- totalErrors = spectralErrors + copilotErrors
-- totalWarnings = spectralWarnings + copilotWarnings
-
-Aplica ESTRICTAMENTE la siguiente lógica:
-
-- Si totalErrors ≥ 1  
-  → Estado: ⛔ RECHAZADO  
-  → Resultado: NO CUMPLE
-
-- Si totalErrors = 0 y totalWarnings ≥ 1  
-  → Estado: ⚠️ CON OBSERVACIONES  
-  → Resultado: CUMPLE
-
-- Si totalErrors = 0 y totalWarnings = 0  
-  → Estado: ✅ APROBADO  
-  → Resultado: CUMPLE
-
-El pipeline es INFORMATIVO y NO BLOQUEANTE.
-
----
-
-## 📌 Estado de Validación (FORMATO FINAL OBLIGATORIO)
-
-```md
-## 📌 Estado de Validación
-
-- **Estado:** [✅ APROBADO | ⚠️ CON OBSERVACIONES | ⛔ RECHAZADO]
-- **Resultado:** [CUMPLE | NO CUMPLE]
-
-### 📊 Métricas
-
-- **Spectral**
-  - Errores: X
-  - Advertencias: Y
-
-- **Copilot**
-  - Errores: A
-  - Advertencias: B
-
-- **Totales**
-  - Errores: E
-  - Advertencias: W
-
-**Modo del pipeline:** Informativo (no bloqueante)
+IMPORTANTE:
+- NO generes una sección de "Estado de Validación" ni calcules totales (esto lo hace el sistema).
+- NO repitas las métricas fuera del bloque `METRICAS_COPILOT`.
