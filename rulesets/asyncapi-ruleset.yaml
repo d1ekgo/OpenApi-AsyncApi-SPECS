@@ -1,46 +1,57 @@
-extends: ["spectral:asyncapi"]
+extends:
+  - spectral:asyncapi
 
 rules:
-  # ---------------------------------------------------------------------------
-  # REGLAS DE ESTRUCTURA (Bloqueantes)
-  # ---------------------------------------------------------------------------
-  
-  # Regla: ID de la API válido (URL de GitHub)
-  api-id-github-url:
+
+  ############################
+  # ESTRUCTURA
+  ############################
+
+  # categoria: Estructura - ID de la API válido
+  api-id-valid:
     description: "El id de la API debe ser la URL del repositorio GitHub del producer."
     severity: error
     given: "$"
     then:
-      field: "id"
+      field: id
       function: pattern
       functionOptions:
         match: "^https://github\\.com/.*"
 
-  # Regla: Título > 10 caracteres
-  api-title-length:
-    description: "El título de la API debe tener más de 10 caracteres."
+  # categoria: Estructura - Título de la API presente y descriptivo
+  api-title-present:
+    description: "La especificación debe tener un título (info.title) con más de 10 caracteres."
     severity: error
     given: "$.info"
     then:
-      field: "title"
+      field: title
       function: length
       functionOptions:
         min: 11
 
-  # Regla: Versión AsyncAPI 3.0.0+
-  asyncapi-version-check:
-    description: "La especificación debe usar AsyncAPI 3.0.0 o superior."
+  # categoria: Estructura - Versión de la API presente
+  api-version-present:
+    description: "La especificación debe incluir info.version."
+    severity: error
+    given: "$.info"
+    then:
+      field: version
+      function: truthy
+
+  # categoria: Estructura - Versión de AsyncAPI
+  asyncapi-version:
+    description: "La especificación debe indicar que usa la versión 3.0.0 o superior de AsyncAPI."
     severity: error
     given: "$"
     then:
-      field: "asyncapi"
+      field: asyncapi
       function: pattern
       functionOptions:
         match: "^3\\..*"
 
-  # Regla: Canales definidos
+  # categoria: Estructura - Canales definidos
   channels-defined:
-    description: "Debe existir al menos un canal."
+    description: "Debe existir al menos un canal en la sección channels."
     severity: error
     given: "$.channels"
     then:
@@ -49,9 +60,9 @@ rules:
         schema:
           minProperties: 1
 
-  # Regla: Operaciones definidas
+  # categoria: Estructura - Operaciones definidas
   operations-defined:
-    description: "Debe existir al menos una operación."
+    description: "Debe existir al menos una operación (operations)."
     severity: error
     given: "$.operations"
     then:
@@ -60,133 +71,157 @@ rules:
         schema:
           minProperties: 1
 
-  # Regla: Acción send/receive
+  # categoria: Estructura - Acción de la operación válida (send/receive)
   operation-action-valid:
-    description: "La acción de la operación debe ser 'send' o 'receive'."
+    description: "La acción de cada operación debe ser 'send' o 'receive'."
     severity: error
-    given: "$.operations.*"
+    given: "$.operations[*]"
     then:
-      field: "action"
+      field: action
       function: enumeration
       functionOptions:
         values: ["send", "receive"]
 
-  # Regla: Schemas TYPE Object (Validación global de schemas)
-  schemas-type-object:
-    description: "Los schemas definidos en componentes deben ser de tipo 'object'."
+  # categoria: Estructura - Mensajes definidos en cada canal
+  channel-messages-defined:
+    description: "Cada canal debe tener al menos un mensaje definido."
     severity: error
-    given: "$.components.schemas.*"
+    given: "$.channels[*]"
     then:
-      field: "type"
-      function: pattern
-      functionOptions:
-        match: "^object$"
-
-  # Regla: Propiedades definidas en Schemas
-  schemas-properties-defined:
-    description: "Cada schema debe contar con al menos una propiedad."
-    severity: error
-    given: "$.components.schemas.*"
-    then:
-      field: "properties"
+      field: messages
       function: truthy
 
-  # ---------------------------------------------------------------------------
-  # REGLAS DE HEADERS (Validación de existencia en components)
-  # ---------------------------------------------------------------------------
+  # categoria: Estructura - Payload del mensaje definido
+  message-payload-defined:
+    description: "Cada mensaje debe incluir un payload."
+    severity: error
+    given: "$.components.messages[*]"
+    then:
+      field: payload
+      function: truthy
 
-  # Verifica que los Traits requeridos existan en components
-  headers-traits-exist:
-    description: "Los traits de headers (common, transport, business, tracking) deben estar definidos en components.messageTraits."
+  # categoria: Estructura - Schemas definidos
+  schemas-defined:
+    description: "La especificación debe definir al menos un schema en components.schemas."
+    severity: error
+    given: "$.components.schemas"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          minProperties: 1
+
+  # categoria: Estructura - Tipo de schema 'object'
+  schema-type-object:
+    description: "Cada schema debe tener el type igual a 'object'."
+    severity: error
+    given: "$.components.schemas[*]"
+    then:
+      field: type
+      function: enumeration
+      functionOptions:
+        values: ["object"]
+
+  # categoria: Estructura - Propiedades del schema definidas
+  schema-properties-defined:
+    description: "Cada schema debe contar con al menos una propiedad en su sección properties."
+    severity: error
+    given: "$.components.schemas[*].properties"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          minProperties: 1
+
+  # categoria: Estructura - Propiedades del schema con tipo
+  schema-properties-with-type:
+    description: "Cada propiedad de los schemas debe especificar un tipo."
+    severity: error
+    given: "$.components.schemas[*].properties[*]"
+    then:
+      field: type
+      function: truthy
+
+  # categoria: Estructura - Booleans no nulos
+  boolean-not-null:
+    description: "Los campos booleanos no pueden tener valor null."
+    severity: error
+    given: "$..*[?(@.type=='boolean')]"
+    then:
+      field: nullable
+      function: falsy
+
+  # categoria: Estructura - No incluir JSON en campos String
+  no-json-in-string:
+    description: "Si se requiere un objeto JSON, definirlo como type: object, no como una cadena con JSON embebido."
+    severity: error
+    given: "$..*[?(@.type=='string')]"
+    then:
+      field: example
+      function: pattern
+      functionOptions:
+        notMatch: "^\\s*[{\\[].*[}\\]]\\s*$"
+
+  # categoria: Estructura - Uso de Message Traits (Headers)
+  message-traits-exist:
+    description: "Los traits para headers (commonHeaders, transportHeaders, businessHeaders, trackingHeaders) deben existir."
     severity: error
     given: "$.components.messageTraits"
     then:
       function: schema
       functionOptions:
         schema:
-          required: ["commonHeaders", "transportHeaders", "businessHeaders", "trackingHeaders"]
+          required:
+            - commonHeaders
+            - transportHeaders
+            - businessHeaders
+            - trackingHeaders
 
-  # Verifica contenido de commonHeaders
-  headers-common-content:
-    description: "commonHeaders debe incluir eventId, eventType, entityId, entityType, timestamp, datetime, version, internal."
+  ############################
+  # HEADERS
+  ############################
+
+  # categoria: Headers - Headers obligatorios comunes, transporte, negocio y tracking
+  mandatory-headers:
+    description: "Se deben cumplir todos los headers obligatorios definidos por la empresa."
     severity: error
-    given: "$.components.messageTraits.commonHeaders.headers.properties"
+    given: "$.components.messageTraits"
     then:
       function: schema
       functionOptions:
         schema:
-          required: ["eventId", "eventType", "entityId", "entityType", "timestamp", "datetime", "version", "internal"]
+          properties:
+            commonHeaders:
+              required: [eventId, eventType, entityId, entityType, timestamp, datetime, version, internal]
+            transportHeaders:
+              required: [channel]
+            businessHeaders:
+              required: [domain, subdomain, businessCapability]
+            trackingHeaders:
+              required: [traceId, spanId]
 
-  # Verifica contenido de transportHeaders
-  headers-transport-content:
-    description: "transportHeaders debe incluir 'channel'."
+  ############################
+  # FORMATO
+  ############################
+
+  # categoria: Formato - No incluir valores nulos o vacíos
+  no-null-or-empty-values:
+    description: "Se deben evitar valores null o cadenas vacías en la especificación."
+    severity: warning
+    given: "$..*"
+    then:
+      function: falsy
+
+  ############################
+  # NOMENCLATURA
+  ############################
+
+  # categoria: Nomenclatura - lowerCamelCase
+  lower-camel-case:
+    description: "Los nombres de campos, propiedades y mensajes deben seguir la convención lowerCamelCase."
     severity: error
-    given: "$.components.messageTraits.transportHeaders.headers.properties"
+    given: "$..properties.*~"
     then:
-      function: schema
-      functionOptions:
-        schema:
-          required: ["channel"]
-
-  # Verifica contenido de trackingHeaders
-  headers-tracking-content:
-    description: "trackingHeaders debe incluir traceId y spanId."
-    severity: error
-    given: "$.components.messageTraits.trackingHeaders.headers.properties"
-    then:
-      function: schema
-      functionOptions:
-        schema:
-          required: ["traceId", "spanId"]
-
-  # ---------------------------------------------------------------------------
-  # REGLAS DE NOMENCLATURA
-  # ---------------------------------------------------------------------------
-
-  # Regla: lowerCamelCase
-  properties-and-messages-lower-camel-case:
-    description: "Los nombres de campos, propiedades y mensajes deben usar lowerCamelCase."
-    severity: error
-    given:
-      - "$..properties"
-      - "$.components.messages"
-      - "$.channels..messages"
-    then:
-      field: "@key"
-      function: casing
-      functionOptions:
-        type: camel
-
-
-  # Regla: Arrays en plural
-  arrays-plural-s:
-    description: "Las propiedades de tipo array deben terminar en 's'."
-    severity: warn
-    given: "$..properties[?(@.type == 'array')]"
-    then:
-      field: "@key"
       function: pattern
       functionOptions:
-        match: ".*s$"
-
-  # Regla: No palabras reservadas
-  no-reserved-words:
-    description: "Prohibido usar: message, body, payload, class, default, function."
-    severity: error
-    given: "$..properties"
-    then:
-      field: "@key"
-      function: pattern
-      functionOptions:
-        notMatch: "^(message|body|payload|class|default|function)$"
-
-  # Regla: Claves sin números al inicio
-  keys-no-starting-number:
-    description: "Ninguna clave debe comenzar con un número."
-    severity: error
-    given: "$..properties"
-    then:
-      field: "@key"
-      function: pattern
-      functionOptions:
-        match: "^[^0-9]"
+        match: "^[a-z][a-zA-Z0-9]*$"
