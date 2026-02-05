@@ -1,8 +1,5 @@
 extends: ["spectral:asyncapi"]
 
-formats:
-  - asyncapi3
-
 rules:
   # ---------------------------------------------------------------------------
   # REGLAS DE ESTRUCTURA (Bloqueantes)
@@ -164,7 +161,7 @@ rules:
   # Regla: Arrays en plural
   arrays-plural-s:
     description: "Las propiedades de tipo array deben terminar en 's'."
-    severity: warning 
+    severity: warn
     given: "$..properties[?(@.type == 'array')]"
     then:
       field: "@key"
