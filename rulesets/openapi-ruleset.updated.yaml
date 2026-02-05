@@ -1,0 +1,761 @@
+extends:
+- spectral:oas
+formats:
+- oas3
+rules:
+  estructura-id-de-la-api-valido:
+    description: '[ID de la API válido] info.x-service-id debe existir y ser una URL
+      válida de repositorio Git (heurística Spectral).'
+    severity: error
+    given: $.info
+    then:
+    - field: x-service-id
+      function: truthy
+    - field: x-service-id
+      function: pattern
+      functionOptions:
+        match: ^(https://)(github|gitlab|bitbucket)\.com/.+/.+$
+  estructura-titulo-descriptivo:
+    description: '[Título descriptivo] info.title debe tener más de 10 caracteres.'
+    severity: error
+    given: $.info
+    then:
+      field: title
+      function: length
+      functionOptions:
+        min: 11
+  estructura-version-de-la-api:
+    description: '[Versión de la API] Debe existir info.version.'
+    severity: error
+    given: $.info
+    then:
+      field: version
+      function: truthy
+  estructura-version-de-openapi:
+    description: '[Versión de OpenAPI] openapi debe ser 3.0.3 o 3.1.x.'
+    severity: error
+    given: $
+    then:
+      field: openapi
+      function: pattern
+      functionOptions:
+        match: ^(3\.0\.3|3\.1\..+)$
+  estructura-paths-definidos:
+    description: '[Paths definidos] Debe existir al menos un endpoint en paths.'
+    severity: error
+    given: $.paths
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  estructura-operaciones-validas:
+    description: '[Operaciones válidas] Cada path debe declarar al menos un método
+      HTTP válido (get/post/put/delete/patch).'
+    severity: error
+    given: $.paths.*
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+          - required:
+            - get
+          - required:
+            - post
+          - required:
+            - put
+          - required:
+            - delete
+          - required:
+            - patch
+  estructura-responses-definidos:
+    description: '[Responses definidos] Todas las operaciones deben incluir responses.'
+    severity: error
+    given: $.paths.*[get,post,put,delete,patch]
+    then:
+      field: responses
+      function: truthy
+  estructura-respuesta-de-exito:
+    description: '[Respuesta de éxito] Cada operación debe definir al menos una respuesta
+      2xx.'
+    severity: error
+    given: $.paths.*[get,post,put,delete,patch]
+    then:
+      field: responses
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+          - required:
+            - '200'
+          - required:
+            - '201'
+          - required:
+            - '202'
+          - required:
+            - '203'
+          - required:
+            - '204'
+          - required:
+            - '205'
+          - required:
+            - '206'
+          - required:
+            - '207'
+          - required:
+            - '208'
+          - required:
+            - '209'
+          - required:
+            - '210'
+          - required:
+            - '211'
+          - required:
+            - '212'
+          - required:
+            - '213'
+          - required:
+            - '214'
+          - required:
+            - '215'
+          - required:
+            - '216'
+          - required:
+            - '217'
+          - required:
+            - '218'
+          - required:
+            - '219'
+          - required:
+            - '220'
+          - required:
+            - '221'
+          - required:
+            - '222'
+          - required:
+            - '223'
+          - required:
+            - '224'
+          - required:
+            - '225'
+          - required:
+            - '226'
+          - required:
+            - '227'
+          - required:
+            - '228'
+          - required:
+            - '229'
+          - required:
+            - '230'
+          - required:
+            - '231'
+          - required:
+            - '232'
+          - required:
+            - '233'
+          - required:
+            - '234'
+          - required:
+            - '235'
+          - required:
+            - '236'
+          - required:
+            - '237'
+          - required:
+            - '238'
+          - required:
+            - '239'
+          - required:
+            - '240'
+          - required:
+            - '241'
+          - required:
+            - '242'
+          - required:
+            - '243'
+          - required:
+            - '244'
+          - required:
+            - '245'
+          - required:
+            - '246'
+          - required:
+            - '247'
+          - required:
+            - '248'
+          - required:
+            - '249'
+          - required:
+            - '250'
+          - required:
+            - '251'
+          - required:
+            - '252'
+          - required:
+            - '253'
+          - required:
+            - '254'
+          - required:
+            - '255'
+          - required:
+            - '256'
+          - required:
+            - '257'
+          - required:
+            - '258'
+          - required:
+            - '259'
+          - required:
+            - '260'
+          - required:
+            - '261'
+          - required:
+            - '262'
+          - required:
+            - '263'
+          - required:
+            - '264'
+          - required:
+            - '265'
+          - required:
+            - '266'
+          - required:
+            - '267'
+          - required:
+            - '268'
+          - required:
+            - '269'
+          - required:
+            - '270'
+          - required:
+            - '271'
+          - required:
+            - '272'
+          - required:
+            - '273'
+          - required:
+            - '274'
+          - required:
+            - '275'
+          - required:
+            - '276'
+          - required:
+            - '277'
+          - required:
+            - '278'
+          - required:
+            - '279'
+          - required:
+            - '280'
+          - required:
+            - '281'
+          - required:
+            - '282'
+          - required:
+            - '283'
+          - required:
+            - '284'
+          - required:
+            - '285'
+          - required:
+            - '286'
+          - required:
+            - '287'
+          - required:
+            - '288'
+          - required:
+            - '289'
+          - required:
+            - '290'
+          - required:
+            - '291'
+          - required:
+            - '292'
+          - required:
+            - '293'
+          - required:
+            - '294'
+          - required:
+            - '295'
+          - required:
+            - '296'
+          - required:
+            - '297'
+          - required:
+            - '298'
+          - required:
+            - '299'
+  estructura-contrato-de-entrada:
+    description: '[Contrato de entrada] Operaciones post/put/patch deben definir requestBody.'
+    severity: error
+    given:
+    - $.paths.*.post
+    - $.paths.*.put
+    - $.paths.*.patch
+    then:
+      field: requestBody
+      function: truthy
+  estructura-schema-de-nivel-superior:
+    description: '[Schema de nivel superior] Schemas raíz en requestBody o respuestas
+      2xx deben ser type: object (o $ref).'
+    severity: error
+    given:
+    - $.paths..requestBody.content.*.schema
+    - $.paths..responses.200.content.*.schema
+    - $.paths..responses.201.content.*.schema
+    - $.paths..responses.202.content.*.schema
+    - $.paths..responses.203.content.*.schema
+    - $.paths..responses.204.content.*.schema
+    - $.paths..responses.205.content.*.schema
+    - $.paths..responses.206.content.*.schema
+    - $.paths..responses.207.content.*.schema
+    - $.paths..responses.208.content.*.schema
+    - $.paths..responses.209.content.*.schema
+    - $.paths..responses.210.content.*.schema
+    - $.paths..responses.211.content.*.schema
+    - $.paths..responses.212.content.*.schema
+    - $.paths..responses.213.content.*.schema
+    - $.paths..responses.214.content.*.schema
+    - $.paths..responses.215.content.*.schema
+    - $.paths..responses.216.content.*.schema
+    - $.paths..responses.217.content.*.schema
+    - $.paths..responses.218.content.*.schema
+    - $.paths..responses.219.content.*.schema
+    - $.paths..responses.220.content.*.schema
+    - $.paths..responses.221.content.*.schema
+    - $.paths..responses.222.content.*.schema
+    - $.paths..responses.223.content.*.schema
+    - $.paths..responses.224.content.*.schema
+    - $.paths..responses.225.content.*.schema
+    - $.paths..responses.226.content.*.schema
+    - $.paths..responses.227.content.*.schema
+    - $.paths..responses.228.content.*.schema
+    - $.paths..responses.229.content.*.schema
+    - $.paths..responses.230.content.*.schema
+    - $.paths..responses.231.content.*.schema
+    - $.paths..responses.232.content.*.schema
+    - $.paths..responses.233.content.*.schema
+    - $.paths..responses.234.content.*.schema
+    - $.paths..responses.235.content.*.schema
+    - $.paths..responses.236.content.*.schema
+    - $.paths..responses.237.content.*.schema
+    - $.paths..responses.238.content.*.schema
+    - $.paths..responses.239.content.*.schema
+    - $.paths..responses.240.content.*.schema
+    - $.paths..responses.241.content.*.schema
+    - $.paths..responses.242.content.*.schema
+    - $.paths..responses.243.content.*.schema
+    - $.paths..responses.244.content.*.schema
+    - $.paths..responses.245.content.*.schema
+    - $.paths..responses.246.content.*.schema
+    - $.paths..responses.247.content.*.schema
+    - $.paths..responses.248.content.*.schema
+    - $.paths..responses.249.content.*.schema
+    - $.paths..responses.250.content.*.schema
+    - $.paths..responses.251.content.*.schema
+    - $.paths..responses.252.content.*.schema
+    - $.paths..responses.253.content.*.schema
+    - $.paths..responses.254.content.*.schema
+    - $.paths..responses.255.content.*.schema
+    - $.paths..responses.256.content.*.schema
+    - $.paths..responses.257.content.*.schema
+    - $.paths..responses.258.content.*.schema
+    - $.paths..responses.259.content.*.schema
+    - $.paths..responses.260.content.*.schema
+    - $.paths..responses.261.content.*.schema
+    - $.paths..responses.262.content.*.schema
+    - $.paths..responses.263.content.*.schema
+    - $.paths..responses.264.content.*.schema
+    - $.paths..responses.265.content.*.schema
+    - $.paths..responses.266.content.*.schema
+    - $.paths..responses.267.content.*.schema
+    - $.paths..responses.268.content.*.schema
+    - $.paths..responses.269.content.*.schema
+    - $.paths..responses.270.content.*.schema
+    - $.paths..responses.271.content.*.schema
+    - $.paths..responses.272.content.*.schema
+    - $.paths..responses.273.content.*.schema
+    - $.paths..responses.274.content.*.schema
+    - $.paths..responses.275.content.*.schema
+    - $.paths..responses.276.content.*.schema
+    - $.paths..responses.277.content.*.schema
+    - $.paths..responses.278.content.*.schema
+    - $.paths..responses.279.content.*.schema
+    - $.paths..responses.280.content.*.schema
+    - $.paths..responses.281.content.*.schema
+    - $.paths..responses.282.content.*.schema
+    - $.paths..responses.283.content.*.schema
+    - $.paths..responses.284.content.*.schema
+    - $.paths..responses.285.content.*.schema
+    - $.paths..responses.286.content.*.schema
+    - $.paths..responses.287.content.*.schema
+    - $.paths..responses.288.content.*.schema
+    - $.paths..responses.289.content.*.schema
+    - $.paths..responses.290.content.*.schema
+    - $.paths..responses.291.content.*.schema
+    - $.paths..responses.292.content.*.schema
+    - $.paths..responses.293.content.*.schema
+    - $.paths..responses.294.content.*.schema
+    - $.paths..responses.295.content.*.schema
+    - $.paths..responses.296.content.*.schema
+    - $.paths..responses.297.content.*.schema
+    - $.paths..responses.298.content.*.schema
+    - $.paths..responses.299.content.*.schema
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+          - required:
+            - $ref
+          - properties:
+              type:
+                const: object
+            required:
+            - type
+  estructura-definicion-de-schemas:
+    description: '[Definición de Schemas] Debe existir al menos un schema en components.schemas.'
+    severity: error
+    given: $.components.schemas
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  estructura-propiedades-de-objetos:
+    description: '[Propiedades de objetos] Todo schema con type: object debe definir
+      properties.'
+    severity: error
+    given: $.components.schemas.*[?(@.type=='object')]
+    then:
+      field: properties
+      function: truthy
+  estructura-tipado-obligatorio:
+    description: '[Tipado obligatorio] Cada propiedad en schemas debe declarar type
+      (o usar $ref/oneOf/anyOf/allOf).'
+    severity: error
+    given: $.components.schemas..properties.*
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+          - required:
+            - type
+          - required:
+            - $ref
+          - required:
+            - oneOf
+          - required:
+            - anyOf
+          - required:
+            - allOf
+  estructura-booleans-no-nulos:
+    description: '[Booleans no nulos] Los campos boolean no pueden ser nullable.'
+    severity: error
+    given: $..[?(@.type == 'boolean')]
+    then:
+      field: nullable
+      function: falsy
+  estructura-prohibicion-de-json-embebido:
+    description: '[Prohibición de JSON embebido] Si type: string incluye example/default
+      tipo JSON embebido (''{'' o ''[''), se reporta error (heurística).'
+    severity: error
+    given: $..[?(@.type == 'string')]
+    then:
+    - field: example
+      function: pattern
+      functionOptions:
+        notMatch: ^\s*[\{\[]
+    - field: default
+      function: pattern
+      functionOptions:
+        notMatch: ^\s*[\{\[]
+  headers-definidos-en-components-parameters:
+    description: '[Headers definidos en components.parameters] Los headers corporativos
+      deben existir en components.parameters con in: header.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - eventId
+          - eventType
+          - entityId
+          - entityType
+          - timestamp
+          - datetime
+          properties:
+            eventId:
+              type: object
+              required:
+              - in
+              - name
+              properties:
+                in:
+                  const: header
+                name:
+                  const: eventId
+            eventType:
+              type: object
+              required:
+              - in
+              - name
+              properties:
+                in:
+                  const: header
+                name:
+                  const: eventType
+            entityId:
+              type: object
+              required:
+              - in
+              - name
+              properties:
+                in:
+                  const: header
+                name:
+                  const: entityId
+            entityType:
+              type: object
+              required:
+              - in
+              - name
+              properties:
+                in:
+                  const: header
+                name:
+                  const: entityType
+            timestamp:
+              type: object
+              required:
+              - in
+              - name
+              properties:
+                in:
+                  const: header
+                name:
+                  const: timestamp
+            datetime:
+              type: object
+              required:
+              - in
+              - name
+              properties:
+                in:
+                  const: header
+                name:
+                  const: datetime
+  headers-referenciados-por-operacion:
+    description: '[Headers referenciados por operación] Cada operación debe referenciar
+      los headers corporativos mediante $ref en parameters.'
+    severity: error
+    given: $.paths.*[get,post,put,delete,patch]
+    then:
+      field: parameters
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          allOf:
+          - contains:
+              properties:
+                $ref:
+                  const: '#/components/parameters/eventId'
+              required:
+              - $ref
+          - contains:
+              properties:
+                $ref:
+                  const: '#/components/parameters/eventType'
+              required:
+              - $ref
+          - contains:
+              properties:
+                $ref:
+                  const: '#/components/parameters/entityId'
+              required:
+              - $ref
+          - contains:
+              properties:
+                $ref:
+                  const: '#/components/parameters/entityType'
+              required:
+              - $ref
+          - contains:
+              properties:
+                $ref:
+                  const: '#/components/parameters/timestamp'
+              required:
+              - $ref
+          - contains:
+              properties:
+                $ref:
+                  const: '#/components/parameters/datetime'
+              required:
+              - $ref
+  headers-eventid-presente:
+    description: '[eventId presente] Debe existir el header eventId en components.parameters.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required:
+          - eventId
+  headers-eventtype-presente:
+    description: '[eventType presente] Debe existir el header eventType en components.parameters.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required:
+          - eventType
+  headers-entityid-presente:
+    description: '[entityId presente] Debe existir el header entityId en components.parameters.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required:
+          - entityId
+  headers-entitytype-presente:
+    description: '[entityType presente] Debe existir el header entityType en components.parameters.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required:
+          - entityType
+  headers-timestamp-presente:
+    description: '[timestamp presente] Debe existir el header timestamp en components.parameters.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required:
+          - timestamp
+  headers-datetime-presente:
+    description: '[datetime presente] Debe existir el header datetime en components.parameters.'
+    severity: error
+    given: $.components.parameters
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          required:
+          - datetime
+  nomenclatura-estrategia-lowercamelcase:
+    description: '[Estrategia lowerCamelCase] Propiedades, query parameters y claves
+      de schemas deben usar lowerCamelCase.'
+    severity: error
+    given:
+    - $..properties
+    - $..parameters[?(@.in == 'query')].name
+    - $.components.schemas
+    then:
+      field: '@key'
+      function: casing
+      functionOptions:
+        type: camel
+  nomenclatura-pluralizacion-de-arrays:
+    description: '[Pluralización de arrays] Propiedades de tipo array deberían terminar
+      en ''s''.'
+    severity: warn
+    given: $..properties[?(@.type == 'array')]
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: .*s$
+  nomenclatura-sin-numeros-iniciales:
+    description: '[Sin números iniciales] Las claves no pueden comenzar con números.'
+    severity: error
+    given: $..properties
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: ^[^0-9]
+  nomenclatura-palabras-reservadas:
+    description: '[Palabras reservadas] Prohibido usar: message, body, payload, class,
+      default, function.'
+    severity: error
+    given: $..properties
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        notMatch: ^(message|body|payload|class|default|function)$
+  formato-evitar-valores-nulos-o-vacios:
+    description: '[Evitar valores nulos o vacíos] Evitar strings vacíos en campos
+      documentales (description/summary).'
+    severity: warn
+    given:
+    - $..description
+    - $..summary
+    then:
+      function: pattern
+      functionOptions:
+        match: .*\S.*
+  claridad-descripcion-de-la-api:
+    description: '[Descripción de la API] info.description debe existir y no estar
+      vacío.'
+    severity: warn
+    given: $.info
+    then:
+      field: description
+      function: pattern
+      functionOptions:
+        match: .*\S.*
+  claridad-resumen-de-operacion:
+    description: '[Resumen de operación] Cada operación debe incluir summary.'
+    severity: warn
+    given: $.paths.*[get,post,put,delete,patch]
+    then:
+      field: summary
+      function: pattern
+      functionOptions:
+        match: .*\S.*
+  claridad-documentacion-de-parametros:
+    description: '[Documentación de parámetros] Parámetros (path/query/header) deberían
+      contar con description (si no son $ref).'
+    severity: warn
+    given:
+    - $.components.parameters.*
+    - $.paths.*[get,post,put,delete,patch].parameters[?(!@.$ref)]
+    then:
+      field: description
+      function: pattern
+      functionOptions:
+        match: .*\S.*
+  claridad-documentacion-de-schemas:
+    description: '[Documentación de schemas] Propiedades en components.schemas deberían
+      incluir description (si no son $ref).'
+    severity: warn
+    given: $.components.schemas..properties.*[?(!@.$ref)]
+    then:
+      field: description
+      function: pattern
+      functionOptions:
+        match: .*\S.*
