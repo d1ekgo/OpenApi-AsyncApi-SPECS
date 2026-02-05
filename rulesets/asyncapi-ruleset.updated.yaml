@@ -1,0 +1,523 @@
+extends:
+- spectral:asyncapi
+rules:
+  estructura-id-de-la-api-valido:
+    description: 'ID de la API válido: el id debe ser la URL del repositorio GitHub del producer.'
+    severity: error
+    given: $
+    then:
+      field: id
+      function: pattern
+      functionOptions:
+        match: ^https://github\.com/.*
+  estructura-titulo-de-la-api-presente-y-descriptivo:
+    description: 'Título de la API presente y descriptivo: info.title debe tener más de 10 caracteres.'
+    severity: error
+    given: $.info
+    then:
+      field: title
+      function: length
+      functionOptions:
+        min: 11
+  estructura-version-de-la-api-presente:
+    description: 'Versión de la API presente: debe existir info.version.'
+    severity: error
+    given: $.info
+    then:
+      field: version
+      function: truthy
+  estructura-version-de-asyncapi:
+    description: 'Versión de AsyncAPI: asyncapi debe ser 3.0.0 o superior.'
+    severity: error
+    given: $
+    then:
+      field: asyncapi
+      function: pattern
+      functionOptions:
+        match: ^3\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+].*)?$
+  estructura-canales-definidos:
+    description: 'Canales definidos: debe existir al menos un canal en channels.'
+    severity: error
+    given: $.channels
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  estructura-operaciones-definidas:
+    description: 'Operaciones definidas: debe existir al menos una operación en operations.'
+    severity: error
+    given: $.operations
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  estructura-accion-de-la-operacion-valida-send-receive:
+    description: 'Acción de la operación válida: operations.*.action debe ser send o receive.'
+    severity: error
+    given: $.operations.*
+    then:
+      field: action
+      function: enumeration
+      functionOptions:
+        values:
+        - send
+        - receive
+  estructura-mensajes-definidos-en-cada-canal:
+    description: 'Mensajes definidos en cada canal: cada operación debe declarar al menos un mensaje en operations.*.messages.'
+    severity: error
+    given: $.operations.*
+    then:
+      field: messages
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          minItems: 1
+  estructura-payload-del-mensaje-definido:
+    description: 'Payload del mensaje definido: cada mensaje debe incluir payload (o ser $ref).'
+    severity: error
+    given:
+    - $.components.messages.*
+    - $.operations.*.messages[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+          - required:
+            - $ref
+          - required:
+            - payload
+  estructura-schemas-definidos:
+    description: 'Schemas definidos: debe existir al menos un schema en components.schemas.'
+    severity: error
+    given: $.components.schemas
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  estructura-tipo-de-schema-object:
+    description: 'Tipo de schema ''object'': cada schema en components.schemas debe tener type: object.'
+    severity: error
+    given: $.components.schemas.*
+    then:
+      field: type
+      function: pattern
+      functionOptions:
+        match: ^object$
+  estructura-propiedades-del-schema-definidas:
+    description: 'Propiedades del schema definidas: cada schema debe tener properties con al menos una propiedad.'
+    severity: error
+    given: $.components.schemas.*
+    then:
+      field: properties
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  estructura-propiedades-del-schema-con-tipo:
+    description: 'Propiedades del schema con tipo: cada propiedad debe especificar type o $ref/oneOf/allOf/anyOf.'
+    severity: error
+    given: $.components.schemas.*.properties.*
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+          - required:
+            - type
+          - required:
+            - $ref
+          - required:
+            - oneOf
+          - required:
+            - anyOf
+          - required:
+            - allOf
+  estructura-booleans-no-nulos:
+    description: 'Booleans no nulos: no permitir booleanos nullable ni type que incluya ''null''.'
+    severity: error
+    given: $..[?(@.type && (@.type == 'boolean' || (@.type.indexOf && @.type.indexOf('boolean') != -1)))]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          not:
+            anyOf:
+            - properties:
+                nullable:
+                  const: true
+              required:
+              - nullable
+            - properties:
+                type:
+                  type: array
+                  contains:
+                    const: 'null'
+              required:
+              - type
+  estructura-no-incluir-json-en-campos-string:
+    description: 'No incluir JSON en campos String: ejemplos/defaults de strings no deben parecer JSON embebido (iniciar con
+      { o [).'
+    severity: error
+    given: $..[?(@.type == 'string')]
+    then:
+    - field: example
+      function: pattern
+      functionOptions:
+        notMatch: ^\s*[\{\[]
+    - field: default
+      function: pattern
+      functionOptions:
+        notMatch: ^\s*[\{\[]
+  estructura-respetar-tipos-definidos:
+    description: 'Respetar tipos definidos (contrato mínimo en headers): valida tipos/formato esperados en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          properties:
+            eventId:
+              type: object
+              properties:
+                type:
+                  const: string
+              required:
+              - type
+            eventType:
+              type: object
+              properties:
+                type:
+                  const: string
+              required:
+              - type
+            entityId:
+              type: object
+              properties:
+                type:
+                  const: string
+              required:
+              - type
+            entityType:
+              type: object
+              properties:
+                type:
+                  const: string
+              required:
+              - type
+            timestamp:
+              type: object
+              properties:
+                type:
+                  const: integer
+              required:
+              - type
+            datetime:
+              type: object
+              properties:
+                type:
+                  const: string
+                format:
+                  const: date-time
+              required:
+              - type
+              - format
+            version:
+              type: object
+              properties:
+                type:
+                  const: string
+              required:
+              - type
+            internal:
+              type: object
+              properties:
+                type:
+                  const: boolean
+              required:
+              - type
+          additionalProperties: true
+  estructura-uso-de-message-traits-headers:
+    description: 'Uso de Message Traits (Headers): deben existir commonHeaders, transportHeaders, businessHeaders y trackingHeaders
+      en components.messageTraits.'
+    severity: error
+    given: $.components.messageTraits
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - commonHeaders
+          - transportHeaders
+          - businessHeaders
+          - trackingHeaders
+  headers-comunes-eventid-presente:
+    description: 'Headers comunes: eventId presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - eventId
+  headers-comunes-eventtype-presente:
+    description: 'Headers comunes: eventType presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - eventType
+  headers-comunes-entityid-presente:
+    description: 'Headers comunes: entityId presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - entityId
+  headers-comunes-entitytype-presente:
+    description: 'Headers comunes: entityType presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - entityType
+  headers-comunes-timestamp-presente:
+    description: 'Headers comunes: timestamp presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - timestamp
+  headers-comunes-datetime-presente:
+    description: 'Headers comunes: datetime presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - datetime
+  headers-comunes-version-presente:
+    description: 'Headers comunes: version presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - version
+  headers-comunes-internal-presente:
+    description: 'Headers comunes: internal presente en commonHeaders.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - internal
+  headers-transporte-channel-presente:
+    description: Header de transporte 'channel' presente en transportHeaders.
+    severity: error
+    given: $.components.messageTraits.transportHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - channel
+  headers-negocio-presentes-y-validos:
+    description: 'Headers de negocio presentes y válidos: businessHeaders debe incluir domain, subdomain, businessCapability.'
+    severity: error
+    given: $.components.messageTraits.businessHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - domain
+              - subdomain
+              - businessCapability
+  headers-seguimiento-presentes:
+    description: 'Headers de seguimiento presentes: trackingHeaders debe incluir traceId y spanId (parentSpanId opcional).'
+    severity: error
+    given: $.components.messageTraits.trackingHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - traceId
+              - spanId
+  formato-no-incluir-valores-nulos-o-vacios:
+    description: 'No incluir valores nulos o vacíos: evitar null o cadenas vacías en la especificación.'
+    severity: warn
+    given:
+    - $..[?(@ == null)]
+    - $..[?(@ == '')]
+    then:
+      function: truthy
+  claridad-descripcion-de-la-api-presente:
+    description: 'Descripción de la API presente: info.description recomendado (no vacío).'
+    severity: warn
+    given: $.info
+    then:
+      field: description
+      function: truthy
+  claridad-descripcion-de-la-operacion-presente-summary:
+    description: 'Descripción de la operación presente (summary): cada operación debe incluir summary.'
+    severity: warn
+    given: $.operations.*
+    then:
+      field: summary
+      function: truthy
+  claridad-propiedades-del-schema-con-descripcion:
+    description: 'Propiedades del schema con descripción: se recomienda description en cada propiedad de components.schemas.'
+    severity: warn
+    given: $.components.schemas.*.properties.*
+    then:
+      field: description
+      function: truthy
+  nomenclatura-lowercamelcase:
+    description: 'lowerCamelCase: nombres de campos/propiedades/mensajes/operaciones deben ser lowerCamelCase (excepto canales).'
+    severity: error
+    given:
+    - $..properties
+    - $.components.messages
+    - $.operations
+    - $.channels..messages
+    then:
+      field: '@key'
+      function: casing
+      functionOptions:
+        type: camel
+  nomenclatura-nombres-de-arrays-en-plural:
+    description: 'Nombres de arrays en plural: propiedades con type: array deben terminar en ''s''.'
+    severity: warn
+    given: $..properties[?(@.type == 'array')]
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: .*s$
+  nomenclatura-claves-json-sin-numeros-al-principio:
+    description: 'Claves JSON sin números al principio: ninguna clave debe comenzar con un número.'
+    severity: error
+    given:
+    - $..properties
+    - $.components.messages
+    - $.operations
+    - $.channels..messages
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: ^[^0-9]
+  nomenclatura-no-usar-palabras-reservadas:
+    description: 'No usar palabras reservadas: prohibidas message, body, payload, class, default, function.'
+    severity: error
+    given:
+    - $..properties
+    - $.components.messages
+    - $.operations
+    - $.channels..messages
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        notMatch: ^(message|body|payload|class|default|function)$
