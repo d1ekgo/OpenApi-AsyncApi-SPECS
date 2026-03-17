@@ -1,0 +1,664 @@
+extends: []
+documentationUrl: https://spec.openapis.org/oas/v3.0.3
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Reglas corporativas OpenAPI — Spectral (determinísticas)
+#  Fuente de verdad: guidelines-openapi.md v1.6
+# ═══════════════════════════════════════════════════════════════════════════════
+
+rules:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # ESTRUCTURA
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  Versión de OpenAPI:
+    description: Versión de OpenAPI
+    message: '[Versión de OpenAPI] Verifica `openapi`: debe declarar la versión 3.0.x (baseline recomendado: 3.0.3). No se permite 3.1+ salvo decisión corporativa explícita.'
+    severity: error
+    given: $.openapi
+    then:
+      function: pattern
+      functionOptions:
+        match: ^3\.0\.\d+$
+
+  Título presente y descriptivo:
+    description: Título presente y descriptivo
+    message: '[Título presente y descriptivo] Verifica `info.title`: debe existir y tener al menos 11 caracteres (título claro y descriptivo).'
+    severity: error
+    given: $.info.title
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: string
+          minLength: 11
+
+  Versión del contrato presente (SemVer):
+    description: Versión del contrato presente (SemVer)
+    message: '[Versión del contrato presente (SemVer)] Verifica `info.version`: debe seguir SemVer (MAJOR.MINOR.PATCH), ej. `1.0.0` (opcional `-rc.1` / `+build`).'
+    severity: error
+    given: $.info.version
+    then:
+      function: pattern
+      functionOptions:
+        match: ^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$
+
+  Repositorio fuente presente:
+    description: Repositorio fuente presente
+    message: '[Repositorio fuente presente] Verifica `info.x-source-repo`: debe existir y ser la URL absoluta del repositorio Git del producer en formato https://github.com/<org>/<repo>.'
+    severity: error
+    given: $.info
+    then:
+      field: x-source-repo
+      function: pattern
+      functionOptions:
+        match: ^https://github\.com/[^/]+/[^/]+$
+
+  Servers definidos:
+    description: Servers definidos
+    message: '[Servers definidos] Verifica `servers`: debe existir y contener al menos 1 server con `url` no vacía.'
+    severity: error
+    given: $.servers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - url
+            properties:
+              url:
+                type: string
+                minLength: 1
+
+  Paths definidos:
+    description: Paths definidos
+    message: '[Paths definidos] Verifica `paths`: debe existir y contener al menos 1 path definido.'
+    severity: error
+    given: $.paths
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+
+  Operación tiene operationId:
+    description: Operación tiene operationId
+    message: '[Operación tiene operationId] Verifica `operationId`: cada operación debe tener un `operationId` único y no vacío en todo el documento.'
+    severity: error
+    given: $.paths[*][get,post,put,patch,delete,head,options,trace]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - operationId
+          properties:
+            operationId:
+              type: string
+              minLength: 1
+
+  Operación tiene responses:
+    description: Operación tiene responses
+    message: '[Operación tiene responses] Verifica `responses`: cada operación debe definir `responses` con al menos 1 status code.'
+    severity: error
+    given: $.paths[*][get,post,put,patch,delete,head,options,trace]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - responses
+          properties:
+            responses:
+              type: object
+              minProperties: 1
+
+  Response tiene description:
+    description: Response tiene description
+    message: '[Response tiene description] Verifica `responses.<code>.description`: cada response debe tener descripción no vacía.'
+    severity: error
+    given: $.paths[*][*].responses[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - description
+          properties:
+            description:
+              type: string
+              minLength: 1
+
+  requestBody con content cuando aplica:
+    description: requestBody con content cuando aplica
+    message: '[requestBody con content cuando aplica] Verifica `requestBody.content`: en POST/PUT/PATCH, el requestBody debe declarar `content` con al menos un media type (ej. application/json).'
+    severity: warn
+    given: $.paths[*][post,put,patch].requestBody
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - content
+          properties:
+            content:
+              type: object
+              minProperties: 1
+
+  Descripción de la API presente:
+    description: Descripción de la API presente
+    message: '[Descripción de la API presente] Verifica `info.description`: se recomienda incluirla para explicar propósito, alcance y audiencia de la API.'
+    severity: warn
+    given: $.info.description
+    then:
+      function: truthy
+
+  Operación con summary:
+    description: Operación con summary
+    message: '[Operación con summary] Verifica `summary` de la operación: debe existir y ser no vacío (acción clara en ≤ 120 caracteres).'
+    severity: warn
+    given: $.paths[*][get,post,put,patch,delete,head,options]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - summary
+          properties:
+            summary:
+              type: string
+              minLength: 1
+
+  Operación con description:
+    description: Operación con description
+    message: '[Operación con description] Verifica `description` de la operación: debería existir y ser no vacío (contexto funcional del endpoint).'
+    severity: warn
+    given: $.paths[*][get,post,put,patch,delete,head,options]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - description
+          properties:
+            description:
+              type: string
+              minLength: 1
+
+  Documento YAML/JSON parseable:
+    description: Documento YAML/JSON parseable
+    message: '[Documento YAML/JSON parseable] El documento debe ser YAML/JSON válido y el nodo raíz debe ser un objeto.'
+    severity: error
+    given: $
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # HEADERS — W3C Trace Context
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  Trazabilidad W3C traceparent por operación:
+    description: Trazabilidad W3C traceparent por operación
+    message: '[Trazabilidad W3C traceparent por operación] Verifica `parameters`: cada operación debe documentar el header `traceparent` (W3C Trace Context), ya sea inline con `name: traceparent` o como `$ref` a `components.parameters.TraceparentHeader`.'
+    severity: error
+    given: $.paths[*][get,post,put,patch,delete,head,options]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - parameters
+          properties:
+            parameters:
+              type: array
+              contains:
+                oneOf:
+                  - type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        const: traceparent
+                  - type: object
+                    required:
+                      - $ref
+                    properties:
+                      $ref:
+                        type: string
+                        pattern: TraceparentHeader$
+
+  tracestate opcional documentado:
+    description: tracestate opcional documentado
+    message: '[tracestate opcional documentado] Verifica `parameters`: se recomienda documentar el header `tracestate` (W3C Trace Context) como parámetro opcional, ya sea inline o como `$ref` a `components.parameters.TracestateHeader`.'
+    severity: warn
+    given: $.paths[*][get,post,put,patch,delete,head,options]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - parameters
+          properties:
+            parameters:
+              type: array
+              contains:
+                oneOf:
+                  - type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        const: tracestate
+                  - type: object
+                    required:
+                      - $ref
+                    properties:
+                      $ref:
+                        type: string
+                        pattern: TracestateHeader$
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # NOMENCLATURA
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  Paths en kebab-case y minúsculas:
+    description: Paths en kebab-case y minúsculas
+    message: '[Paths en kebab-case y minúsculas] Verifica keys de `paths`: los segmentos fijos deben ser minúsculas y kebab-case; las variables `{...}` deben ser lowerCamelCase.'
+    severity: error
+    given: $.paths
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^(/([a-z][a-z0-9-]*|\{[a-zA-Z][a-zA-Z0-9]*\}))+$
+
+  Prohibido verbos CRUD exactos en el path:
+    description: Prohibido verbos CRUD exactos en el path
+    message: '[Prohibido verbos CRUD exactos en el path] Verifica keys de `paths`: no usar segmentos exactamente iguales a verbos de acción como /create, /update, /delete, /get, /list, /find, etc.'
+    severity: error
+    given: $.paths
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            not:
+              pattern: (^|/)(create|update|delete|list|remove|add|find|fetch|insert|get|set)(/|$)
+
+  Variables de path en lowerCamelCase:
+    description: Variables de path en lowerCamelCase
+    message: '[Variables de path en lowerCamelCase] Verifica `parameters[in=path].name`: las variables de path deben ser lowerCamelCase (ej. `orderId`, no `order_id` ni `OrderId`).'
+    severity: error
+    given: $..parameters[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            required:
+              - in
+            properties:
+              in:
+                const: path
+          then:
+            properties:
+              name:
+                type: string
+                pattern: ^[a-z][a-zA-Z0-9]*$
+
+  Propiedades en lowerCamelCase:
+    description: Propiedades en lowerCamelCase
+    message: '[Propiedades en lowerCamelCase] Verifica `components.schemas[*].properties`: las keys deben ser lowerCamelCase (sin snake_case ni PascalCase).'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^[a-z][a-zA-Z0-9]*$
+
+  Schemas en PascalCase:
+    description: Schemas en PascalCase
+    message: '[Schemas en PascalCase] Verifica keys de `components.schemas`: se recomienda PascalCase (ej. `Order`, `ProblemDetails`, `CreateOrderRequest`).'
+    severity: warn
+    given: $.components.schemas
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^[A-Z][a-zA-Z0-9]*$
+
+  Claves JSON sin números al inicio:
+    description: Claves JSON sin números al inicio
+    message: '[Claves JSON sin números al inicio] Verifica `components.schemas[*].properties`: ninguna propiedad debe comenzar con un número.'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^[^0-9].*$
+
+  Llaves en inglés (tildes y ñ):
+    description: Llaves en inglés (tildes y ñ)
+    message: '[Llaves en inglés] Verifica `components.schemas[*].properties`: las keys no deben contener caracteres con tilde ni ñ (áéíóúñ). Usa equivalentes en inglés (ej. `customerName` en vez de `nombreCliente`).'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: "^[a-zA-Z0-9_-]*$"
+
+  operationId en lowerCamelCase:
+    description: operationId en lowerCamelCase
+    message: '[operationId en lowerCamelCase] Verifica `operationId`: debe seguir lowerCamelCase (ej. `listOrders`, `createOrder`, `getOrderById`).'
+    severity: error
+    given: $.paths[*][get,post,put,patch,delete,head,options,trace].operationId
+    then:
+      function: pattern
+      functionOptions:
+        match: ^[a-z][a-zA-Z0-9]*$
+
+  Arrays con items definidos:
+    description: Arrays con items definidos
+    message: '[Arrays con items definidos] Verifica `type: array`: toda propiedad de tipo array debe definir `items`.'
+    severity: error
+    given: $.components.schemas..[?(@ && @.type=='array')]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - items
+
+  Booleanos no nulos:
+    description: Booleanos no nulos
+    message: '[Booleanos no nulos] Verifica `components.schemas[*].properties`: las propiedades de tipo boolean no deben ser nullable ni tener `default: null`. Los booleanos siempre deben tener un valor definido (true/false).'
+    severity: warn
+    given: $.components.schemas[*].properties[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              type:
+                const: boolean
+          then:
+            properties:
+              nullable:
+                not:
+                  const: true
+              default:
+                not:
+                  const: null
+
+  Evitar palabras reservadas en propiedades:
+    description: Evitar palabras reservadas en propiedades (JavaScript completo)
+    message: '[Evitar palabras reservadas en propiedades] Verifica `components.schemas[*].properties`: el nombre de la propiedad coincide con una palabra reservada de JavaScript o un nombre problemático de API (`message`, `body`, `payload`, `class`, `default`, `function`, `null`, `true`, `false`, `return`, `var`, `let`, `const`, `new`, `this`, `typeof`, `delete`, `void`, `instanceof`, `in`, `if`, `else`, `for`, `while`, `do`, `break`, `continue`, `switch`, `case`, `throw`, `try`, `catch`, `finally`, `import`, `export`, `extends`, `super`, `yield`, `async`, `await`, `static`, `with`, `debugger`, `eval`, `arguments`, `prototype`, `constructor`). Usar estas palabras como claves JSON puede causar errores en parsers, serializers y runtimes JavaScript/TypeScript.'
+    severity: warn
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            not:
+              enum:
+                - message
+                - body
+                - payload
+                - class
+                - default
+                - function
+                - "null"
+                - "true"
+                - "false"
+                - var
+                - let
+                - const
+                - return
+                - if
+                - else
+                - for
+                - while
+                - do
+                - break
+                - continue
+                - switch
+                - case
+                - throw
+                - try
+                - catch
+                - finally
+                - with
+                - debugger
+                - typeof
+                - delete
+                - void
+                - instanceof
+                - in
+                - new
+                - this
+                - extends
+                - super
+                - import
+                - export
+                - static
+                - yield
+                - async
+                - await
+                - eval
+                - arguments
+                - prototype
+                - constructor
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # SEGURIDAD Y ERRORES — RFC 9457 Problem Details
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  Errores 4xx y 5xx con application/problem+json:
+    description: Errores 4xx y 5xx con application/problem+json
+    message: '[Errores 4xx y 5xx con application/problem+json] Verifica `responses`: las respuestas 4xx y 5xx deben declarar `content` con media type `application/problem+json` (RFC 9457 — Problem Details).'
+    severity: error
+    given: $.paths[*][*].responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          patternProperties:
+            '^[45]':
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: object
+                  required:
+                    - 'application/problem+json'
+
+  Componentes de error con application/problem+json:
+    description: Componentes de error con application/problem+json
+    message: '[Errores 4xx y 5xx con application/problem+json] Verifica `components.responses`: los componentes de respuesta de error (nombre que contenga Bad, Not, Error, Conflict, Unauth, Forbidden, Invalid, Timeout, Unavailable, TooMany, Unprocessable) deben usar `application/problem+json` como media type (RFC 9457 — Problem Details).'
+    severity: error
+    given: "$.components.responses[BadRequest,NotFound,Unauthorized,Forbidden,Conflict,UnprocessableEntity,TooManyRequests,InternalServerError,ServiceUnavailable,GatewayTimeout,InvalidRequest,BadGateway].content"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - 'application/problem+json'
+
+  ProblemDetails schema definido:
+    description: ProblemDetails schema definido
+    message: '[ProblemDetails schema definido] Verifica `components.schemas`: debe existir el schema `ProblemDetails` con los campos mínimos requeridos por RFC 9457 (type, title, status, detail).'
+    severity: error
+    given: $.components.schemas
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - ProblemDetails
+
+  Servers URL estándar ARCHBX (escenarios 1 y 2 — API Gateway):
+    description: Servers URL estándar ARCHBX — Escenarios 1 y 2 (API Gateway)
+    message: '[Servers URL estándar ARCHBX] La URL comienza con https://api. pero no cumple el patrón de Escenario 1/2. Esperado: https://api[.<env>].blue.cl/<cap>/<svc>/v<MAJOR>. Prohibido: /api/ prefijo, subdominios por servicio, MINOR/PATCH en URL.'
+    severity: error
+    given: $.servers[*].url
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: string
+          not:
+            allOf:
+              - pattern: "^https://api\\."
+              - not:
+                  pattern: "^https://api(\\.[a-z][a-z0-9-]+)?\\.blue\\.cl/[a-z][a-z0-9-]*/[a-z][a-z0-9-]*/v\\d+(/.*)?$"
+
+  Servers URL estándar ARCHBX (escenario 3 — BFF):
+    description: Servers URL estándar ARCHBX — Escenario 3 (BFF)
+    message: '[Servers URL estándar ARCHBX] La URL comienza con https://int.api pero no cumple el patrón de Escenario 3 BFF. Esperado: https://int.api[.<env>].blue.cl/bff/<app>/v<MAJOR>. El subdominio int.api y prefijo /bff/ son obligatorios.'
+    severity: error
+    given: $.servers[*].url
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: string
+          not:
+            allOf:
+              - pattern: "^https://int\\.api"
+              - not:
+                  pattern: "^https://int\\.api(\\.[a-z][a-z0-9-]+)?\\.blue\\.cl/bff/[a-z][a-z0-9-]*/v\\d+(/.*)?$"
+
+  Servers URL estándar ARCHBX (escenario 4 — microservicios):
+    description: Servers URL estándar ARCHBX — Escenario 4 (microservicios)
+    message: '[Servers URL estándar ARCHBX] La URL no es Gateway (api.) ni BFF (int.api.) pero no cumple ningún patrón válido de Escenario 4. DNS interno: http://<svc>.<ns>/v<MAJOR>. Ingress externo: https://<svc>.blueexpress.tech/v<MAJOR>.'
+    severity: error
+    given: $.servers[*].url
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: string
+          not:
+            allOf:
+              - not:
+                  pattern: "^(https://api\\.|https://int\\.api|https?://(localhost|127\\.0\\.0\\.1))"
+              - not:
+                  pattern: "^(http://[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*/v\\d+(/.*)?|https://[a-z][a-z0-9-]*\\.blueexpress\\.tech/v\\d+(/.*)?|https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?(/.*)?)"
+
+
+  ProblemDetails con campos mínimos:
+    description: ProblemDetails con campos mínimos
+    message: '[ProblemDetails con campos mínimos] Verifica `components.schemas.ProblemDetails`: debe definir como required los campos type, title, status y detail (instance es opcional).'
+    severity: error
+    given: $.components.schemas.ProblemDetails
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - type
+            - properties
+            - required
+          properties:
+            type:
+              const: object
+            properties:
+              type: object
+              required:
+                - type
+                - title
+                - status
+                - detail
+            required:
+              type: array
+              allOf:
+                - contains:
+                    const: type
+                - contains:
+                    const: title
+                - contains:
+                    const: status
+                - contains:
+                    const: detail
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # SEGURIDAD — securitySchemes (Zero Trust)
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  Autenticación documentada:
+    description: Autenticación documentada
+    message: '[Autenticación documentada] Verifica `components.securitySchemes`: la API debe declarar al menos un esquema de seguridad (ej. oauth2, apiKey, bearer). Requerido por el estándar corporativo de Zero Trust (JWT / Client Credentials). Operaciones públicas deben sobreescribir con `security: []` a nivel de operación.'
+    severity: error
+    given: $
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+            - components
+          properties:
+            components:
+              type: object
+              required:
+                - securitySchemes
+              properties:
+                securitySchemes:
+                  type: object
+                  minProperties: 1
+
+  Claves sin caracteres Unicode no imprimibles:
+    description: Claves sin caracteres Unicode no imprimibles
+    message: '[Claves sin caracteres Unicode no imprimibles] Verifica `components.schemas[*].properties`: las keys NO deben contener caracteres de control Unicode (U+0000-U+001F, U+007F) ni ser cadenas vacías. Estos caracteres son invisibles, rompen SDKs de generación de código y producen comportamientos indefinidos en parsers JavaScript. Solo se permiten caracteres ASCII imprimibles (U+0020-U+007E) en nombres de propiedades.'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: "^[\\x20-\\x7E]+$"
+            minLength: 1
