@@ -1,0 +1,987 @@
+extends: []
+documentationUrl: https://www.asyncapi.com/docs/reference/specification/v3.0.0
+rules:
+  ID de la API válido:
+    description: ID de la API válido
+    message: '[ID de la API válido] Verifica `id`: debe ser la URL absoluta del repositorio Git del producer (https://<host>/<org>/<repo>). Acepta GitHub, GitLab, Bitbucket o instancias privadas de Git. No se permiten IDs sin protocolo ni sin estructura de repositorio.'
+    severity: error
+    given: $.id
+    then:
+      function: pattern
+      functionOptions:
+        match: ^https://[a-zA-Z0-9][a-zA-Z0-9.-]+/[^/]+/[^/]+
+  Versión de AsyncAPI:
+    description: Versión de AsyncAPI
+    message: '[Versión de AsyncAPI] (Versión de AsyncAPI) Verifica `asyncapi`: debe declarar la versión requerida del contrato (3.0.0).'
+    severity: error
+    given: $.asyncapi
+    then:
+      function: pattern
+      functionOptions:
+        match: ^3\.0\.0$
+  Título de la API presente y descriptivo:
+    description: Título de la API presente y descriptivo
+    message: '[Título de la API presente y descriptivo] (Título de la API presente y descriptivo) Verifica `info.title`: debe existir y tener al menos 11 caracteres (título claro y descriptivo).'
+    severity: error
+    given: $.info.title
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: string
+          minLength: 11
+  Versión de la API presente:
+    description: Versión de la API presente
+    message: '[Versión de la API presente] (Versión de la API presente) Verifica `info.version`: debe existir (luego valida SemVer en la regla correspondiente).'
+    severity: error
+    given: $.info.version
+    then:
+      function: truthy
+  Contacto presente:
+    description: Contacto presente
+    message: '[Contacto presente] (Contacto presente) Verifica `info.contact`: debe incluir `name` y `email` no vacíos.'
+    severity: warn
+    given: $.info.contact
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - name
+          - email
+          properties:
+            name:
+              type: string
+              minLength: 1
+            email:
+              type: string
+              minLength: 3
+  Licencia presente:
+    description: Licencia presente
+    message: '[Licencia presente] (Licencia presente) Verifica `info.license`: debe incluir `name` y `url` no vacíos.'
+    severity: warn
+    given: $.info.license
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - name
+          - url
+          properties:
+            name:
+              type: string
+              minLength: 1
+            url:
+              type: string
+              minLength: 5
+  defaultContentType definido:
+    description: defaultContentType definido
+    message: '[defaultContentType definido] (defaultContentType definido) Verifica `defaultContentType`: debe ser `application/json` según el estándar corporativo.'
+    severity: error
+    given: $.defaultContentType
+    then:
+      function: pattern
+      functionOptions:
+        match: ^application/json$
+  Servers definidos:
+    description: Servers definidos
+    message: '[Servers definidos] (Servers definidos) Verifica `servers`: debe existir y contener al menos 1 server.'
+    severity: error
+    given: $.servers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  Canales definidos:
+    description: Canales definidos
+    message: '[Canales definidos] (Canales definidos) Verifica `channels`: debe existir y contener al menos 1 canal.'
+    severity: error
+    given: $.channels
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  '`address` de canal presente':
+    description: '`address` de canal presente'
+    message: '[`address` de canal presente] (`address` de canal presente) Verifica `channels.<canal>.address`: debe existir y no estar vacío.'
+    severity: error
+    given: $.channels[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - address
+          properties:
+            address:
+              type: string
+              minLength: 1
+
+  '`address` sigue patrón topic/queue':
+    description: '`address` sigue patrón topic/queue'
+    message: '[`address` coincide con el nombre real] Verifica `channels.<canal>.address`: debe seguir el patrón corporativo `^(topic|queue)-` y no contener dobles guiones. Para verificar igualdad exacta con la key del canal, se requiere evaluación Copilot.'
+    severity: error
+    given: $.channels[*].address
+    then:
+      function: pattern
+      functionOptions:
+        match: ^(topic|queue)-[a-z0-9]+(-[a-z0-9]+)*$
+  Mensajes definidos en cada canal:
+    description: Mensajes definidos en cada canal
+    message: '[Mensajes definidos en cada canal] (Mensajes definidos en cada canal) Verifica `channels.<canal>.messages`: debe existir y tener al menos 1 mensaje definido.'
+    severity: error
+    given: $.channels[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - messages
+          properties:
+            messages:
+              type: object
+              minProperties: 1
+  Operaciones definidas:
+    description: Operaciones definidas
+    message: '[Operaciones definidas] (Operaciones definidas) Verifica `operations`: debe existir y contener al menos 1 operación.'
+    severity: error
+    given: $.operations
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  Acción de la operación válida (send/receive):
+    description: Acción de la operación válida (send/receive)
+    message: '[Acción de la operación válida (send/receive)] (Acción de la operación válida (send/receive)) Verifica `operations.<op>.action`: solo se permite `send` o `receive`.'
+    severity: error
+    given: $.operations[*].action
+    then:
+      function: enumeration
+      functionOptions:
+        values:
+        - send
+        - receive
+  Canal referenciado por operación:
+    description: Canal referenciado por operación
+    message: '[Canal referenciado por operación] (Canal referenciado por operación) Verifica `operations.<op>.channel.$ref`: debe apuntar a `#/channels/<channelKey>`.'
+    severity: error
+    given: $.operations[*].channel.$ref
+    then:
+      function: pattern
+      functionOptions:
+        match: ^#/channels/
+  Mensajes declarados por operación:
+    description: Mensajes declarados por operación
+    message: '[Mensajes declarados por operación] (Mensajes declarados por operación) Verifica `operations.<op>.messages`: debe existir y contener al menos 1 item (referencia a mensaje).'
+    severity: error
+    given: $.operations[*].messages
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          minItems: 1
+  Mensajes de operación referencian mensajes del canal:
+    description: Mensajes de operación referencian mensajes del canal
+    message: '[Mensajes de operación referencian mensajes del canal] (Mensajes de operación referencian mensajes del canal) Verifica `operations.<op>.messages[*].$ref`: debe referenciar un mensaje del canal, con formato `#/channels/<channelKey>/messages/<messageKey>`.'
+    severity: error
+    given: $.operations[*].messages[*].$ref
+    then:
+      function: pattern
+      functionOptions:
+        match: ^#/channels/[^/]+/messages/[^/]+$
+  Payload del mensaje definido:
+    description: Payload del mensaje definido
+    message: '[Payload del mensaje definido] (Payload del mensaje definido) Verifica `components.messages.<msg>.payload`: el mensaje debe declarar `payload` (directo o por `$ref`).'
+    severity: error
+    given: $.components.messages[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - payload
+  Schemas definidos:
+    description: Schemas definidos
+    message: '[Schemas definidos] (Schemas definidos) Verifica `components.schemas`: debe existir y contener al menos 1 schema.'
+    severity: error
+    given: $.components.schemas
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+  Schema object con properties:
+    description: Schema object con properties
+    message: '[Schema object con properties] (Schema object con properties) Verifica cada `components.schemas.<schema>`: debe ser `type: object` y tener `properties` con al menos 1 propiedad.'
+    severity: error
+    given: $.components.schemas[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - properties
+          properties:
+            type:
+              const: object
+            properties:
+              type: object
+              minProperties: 1
+  Arrays con items:
+    description: Arrays con items
+    message: '[Arrays con items] (Arrays con items) Verifica arrays: toda definición con `type: array` debe incluir `items`.'
+    severity: error
+    given: $.components.schemas..[?(@ && @.type=='array')]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - items
+  Versión de la API en SemVer:
+    description: Versión de la API en SemVer
+    message: '[Versión de la API en SemVer] (Versión de la API en SemVer) Verifica `info.version`: debe cumplir SemVer (MAJOR.MINOR.PATCH), ej. `1.0.0` (opcional `-rc.1` / `+build`).'
+    severity: error
+    given: $.info.version
+    then:
+      function: pattern
+      functionOptions:
+        match: ^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$
+  protocolVersion de server presente:
+    description: protocolVersion de server presente
+    message: '[protocolVersion de server presente] (protocolVersion de server presente) Verifica `servers.<srv>.protocolVersion`: debe existir (ej. `1.0.0`).'
+    severity: warn
+    given: $.servers[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - protocolVersion
+          properties:
+            protocolVersion:
+              type: string
+              minLength: 1
+  Host ARN válido para SNS/SQS:
+    description: Host ARN válido para SNS/SQS
+    message: '[Host ARN válido para SNS/SQS] (Host ARN válido para SNS/SQS) Si `servers.<srv>.protocol` es `sns` o `sqs`, verifica `host`: debe ser ARN válido `arn:aws:(sns|sqs):<region>:<accountId12>`.'
+    severity: warn
+    given: $.servers[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - protocol
+          - host
+          properties:
+            protocol:
+              type: string
+            host:
+              type: string
+          allOf:
+          - if:
+              properties:
+                protocol:
+                  enum:
+                  - sns
+                  - sqs
+            then:
+              properties:
+                host:
+                  pattern: ^arn:aws:(sns|sqs):[a-z0-9-]+:\d{12}$
+  Message Traits corporativos presentes:
+    description: Message Traits corporativos presentes
+    message: '[Message Traits corporativos presentes] (Message Traits corporativos presentes) Verifica `components.messageTraits`: deben existir `commonHeaders`, `transportHeaders`, `businessHeaders`, `trackingHeaders`.'
+    severity: error
+    given: $.components.messageTraits
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - commonHeaders
+          - transportHeaders
+          - businessHeaders
+          - trackingHeaders
+  'commonHeaders: campos mínimos':
+    description: 'commonHeaders: campos mínimos'
+    message: '[commonHeaders: campos mínimos] (commonHeaders: campos mínimos) Verifica `commonHeaders.headers`: debe contener y marcar como requeridos: eventId, eventType, entityId, entityType, timestamp, datetime, version, internal.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - properties
+          - required
+          properties:
+            type:
+              const: object
+            properties:
+              type: object
+              required:
+              - eventId
+              - eventType
+              - entityId
+              - entityType
+              - timestamp
+              - datetime
+              - version
+              - internal
+            required:
+              type: array
+              allOf:
+              - contains:
+                  const: eventId
+              - contains:
+                  const: eventType
+              - contains:
+                  const: entityId
+              - contains:
+                  const: entityType
+              - contains:
+                  const: timestamp
+              - contains:
+                  const: datetime
+              - contains:
+                  const: version
+              - contains:
+                  const: internal
+  'timestamp: epoch ms (int64)':
+    description: 'timestamp: epoch ms (int64)'
+    message: '[timestamp: epoch ms (int64)] (timestamp: epoch ms (int64)) Verifica `commonHeaders.timestamp`: debe ser `type: integer` y `format: int64` (epoch UTC en milisegundos; int32 solo si se justifica).'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties.timestamp
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          properties:
+            type:
+              const: integer
+            format:
+              enum:
+              - int64
+              - int32
+  'datetime: RFC3339 (date-time)':
+    description: 'datetime: RFC3339 (date-time)'
+    message: '[datetime: RFC3339 (date-time)] (datetime: RFC3339 (date-time)) Verifica `commonHeaders.datetime`: debe ser `type: string` con `format: date-time` (RFC3339).'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties.datetime
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - format
+          properties:
+            type:
+              const: string
+            format:
+              const: date-time
+  'version: MAJOR.MINOR':
+    description: 'version: MAJOR.MINOR'
+    message: '[version: MAJOR.MINOR] (version: MAJOR.MINOR) Verifica `commonHeaders.version`: debe definir patrón `X.Y` (ej. `1.0`).'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties.version
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - pattern
+          properties:
+            type:
+              const: string
+            pattern:
+              const: ^\d+\.\d+$
+  'internal: boolean no nulo':
+    description: 'internal: boolean no nulo'
+    message: '[internal: boolean no nulo] Verifica `commonHeaders.internal`: debe ser `type: boolean`. El uso de `nullable: true` en un boolean de header es un anti-patrón (un evento siempre sabe si es interno o no).'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties.internal
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          properties:
+            type:
+              const: boolean
+          if:
+            properties:
+              nullable:
+                type: boolean
+          then:
+            properties:
+              nullable:
+                const: false
+  'transportHeaders: channel presente':
+    description: 'transportHeaders: channel presente'
+    message: '[transportHeaders: channel presente] Verifica `transportHeaders.headers.properties.channel`: debe existir, ser type:string y definir enum con los valores corporativos (web, mobile, api, batch_process, internal_system, external_partner).'
+    severity: error
+    given: $.components.messageTraits.transportHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          properties:
+            properties:
+              type: object
+              required:
+              - channel
+              properties:
+                channel:
+                  type: object
+                  required:
+                  - type
+                  - enum
+                  properties:
+                    type:
+                      const: string
+                    enum:
+                      type: array
+                      allOf:
+                      - contains:
+                          const: web
+                      - contains:
+                          const: mobile
+                      - contains:
+                          const: api
+                      - contains:
+                          const: batch_process
+                      - contains:
+                          const: internal_system
+                      - contains:
+                          const: external_partner
+  'businessHeaders: dominio/subdominio/capability':
+    description: 'businessHeaders: dominio/subdominio/capability'
+    message: '[businessHeaders: dominio/subdominio/capability] Verifica `businessHeaders.headers`: domain, subdomain y businessCapability deben existir, estar en required y definir pattern:^[a-z0-9]+$ (solo lowercase alfanumérico, sin guiones ni mayusculas).'
+    severity: error
+    given: $.components.messageTraits.businessHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - properties
+          - required
+          properties:
+            properties:
+              type: object
+              required:
+              - domain
+              - subdomain
+              - businessCapability
+              properties:
+                domain:
+                  type: object
+                  required:
+                  - type
+                  - pattern
+                  properties:
+                    type:
+                      const: string
+                    pattern:
+                      const: '^[a-z0-9]+$'
+                subdomain:
+                  type: object
+                  required:
+                  - type
+                  - pattern
+                  properties:
+                    type:
+                      const: string
+                    pattern:
+                      const: '^[a-z0-9]+$'
+                businessCapability:
+                  type: object
+                  required:
+                  - type
+                  - pattern
+                  properties:
+                    type:
+                      const: string
+                    pattern:
+                      const: '^[a-z0-9]+$'
+            required:
+              type: array
+              allOf:
+              - contains:
+                  const: domain
+              - contains:
+                  const: subdomain
+              - contains:
+                  const: businessCapability
+  'trackingHeaders: traceId hex32':
+    description: 'trackingHeaders: traceId hex32'
+    message: '[trackingHeaders: traceId hex32] (trackingHeaders: traceId hex32) Verifica `trackingHeaders.traceId`: define `pattern: ^[0-9a-f]{32}$` (hex32 minúsculas).'
+    severity: error
+    given: $.components.messageTraits.trackingHeaders.headers.properties.traceId
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - pattern
+          properties:
+            type:
+              const: string
+            pattern:
+              const: ^[0-9a-f]{32}$
+  'trackingHeaders: spanId hex16':
+    description: 'trackingHeaders: spanId hex16'
+    message: '[trackingHeaders: spanId hex16] (trackingHeaders: spanId hex16) Verifica `trackingHeaders.spanId`: define `pattern: ^[0-9a-f]{16}$` (hex16 minúsculas).'
+    severity: error
+    given: $.components.messageTraits.trackingHeaders.headers.properties.spanId
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - pattern
+          properties:
+            type:
+              const: string
+            pattern:
+              const: ^[0-9a-f]{16}$
+  'trackingHeaders: parentSpanId opcional pero válido':
+    description: 'trackingHeaders: parentSpanId opcional pero válido'
+    message: '[trackingHeaders: parentSpanId opcional pero válido] (trackingHeaders: parentSpanId opcional pero válido) Si defines `parentSpanId`, debe ser string con `pattern: ^[0-9a-f]{16}$` (hex16). Si no aplica, omítelo.'
+    severity: warn
+    given: $.components.messageTraits.trackingHeaders.headers.properties.parentSpanId
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - pattern
+          properties:
+            type:
+              const: string
+            pattern:
+              const: ^[0-9a-f]{16}$
+          not:
+            properties:
+              nullable:
+                const: true
+  'eventId: UUID o hex32':
+    description: 'eventId: UUID o hex32'
+    message: '[eventId: UUID o hex32] (eventId: UUID o hex32) Verifica `commonHeaders.eventId`: debe ser `string` y definir `pattern` para UUID (`xxxxxxxx-....`) o hex32 (`^[0-9a-f]{32}$`).'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties.eventId
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - pattern
+          properties:
+            type:
+              const: string
+            pattern:
+              enum:
+              - ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+              - ^[0-9a-f]{32}$
+  'eventType: lowerCamelCase':
+    description: 'eventType: lowerCamelCase'
+    message: '[eventType: lowerCamelCase] Verifica `commonHeaders.eventType`: debe ser `type: string` y definir un `pattern` para lowerCamelCase (ej. ^[a-z][A-Za-z0-9]*$). Se valida que el campo pattern exista, no su valor exacto.'
+    severity: error
+    given: $.components.messageTraits.commonHeaders.headers.properties.eventType
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - type
+          - pattern
+          properties:
+            type:
+              const: string
+            pattern:
+              type: string
+              minLength: 1
+  Canales siguen patrón corporativo:
+    description: Canales siguen patrón corporativo
+    message: '[Canales siguen patrón corporativo] (Canales siguen patrón corporativo) Verifica las keys bajo `channels`: deben seguir `^(topic|queue)-...$` (lowercase, guiones) según el patrón corporativo del dominio/subdominio/capability/evento.'
+    severity: error
+    given: $.channels
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^(topic|queue)-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+(?:-[a-z0-9]+)*$
+  Operaciones con prefijo send/receive:
+    description: Operaciones con prefijo send/receive
+    message: '[Operaciones con prefijo send/receive] (Operaciones con prefijo send/receive) Verifica las keys bajo `operations`: deben comenzar con `send` o `receive` y seguir camelCase (ej. `sendCreatedPudo`).'
+    severity: error
+    given: $.operations
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^(send|receive)[A-Z][A-Za-z0-9]*$
+  Message name en lowerCamelCase:
+    description: Message name en lowerCamelCase
+    message: '[Message name en lowerCamelCase] Verifica `components.messages.*.name`: el campo name de cada mensaje debe ser lowerCamelCase y representar el hecho en pasado (ej. pudoCreated, orderUpdated). Las keys del map (ej. PudoCreatedMessage) son PascalCase y no son evaluadas por esta regla.'
+    severity: error
+    given: $.components.messages[*].name
+    then:
+      function: pattern
+      functionOptions:
+        match: ^[a-z][A-Za-z0-9]*$
+  Schemas en PascalCase:
+    description: Schemas en PascalCase
+    message: '[Schemas en PascalCase] (Schemas en PascalCase) Verifica las keys bajo `components.schemas`: recomendado PascalCase (ej. `PudoCreatedBody`).'
+    severity: warn
+    given: $.components.schemas
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^[A-Z][A-Za-z0-9]*$
+  Propiedades lowerCamelCase:
+    description: Propiedades lowerCamelCase
+    message: '[Propiedades lowerCamelCase] (Propiedades lowerCamelCase) Verifica `components.schemas.*.properties`: los nombres deben estar en lowerCamelCase (sin espacios/guiones).'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^[a-z][A-Za-z0-9]*$
+  Llaves en inglés (tildes y ñ):
+    description: Llaves en inglés (tildes y ñ)
+    message: '[Llaves en inglés] Verifica `components.schemas.*.properties`: las keys no deben contener caracteres con tilde ni ñ (áéíóúñ). Usa equivalentes en inglés (ej. `customerName` en vez de `nombreCliente`).'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: "^[a-zA-Z0-9_-]*$"
+
+  Claves JSON sin números al inicio:
+    description: Claves JSON sin números al inicio
+    message: '[Claves JSON sin números al inicio] (Claves JSON sin números al inicio) Verifica nombres de propiedades: ninguna clave debe comenzar con un número.'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^[^0-9].*$
+  Booleanos no nulos:
+    description: Booleanos no nulos
+    message: '[Booleanos no nulos] Verifica `components.schemas[*].properties`: las propiedades de tipo boolean no deben ser nullable ni tener `default: null`. Los booleanos siempre deben tener un valor definido (true/false).'
+    severity: warn
+    given: $.components.schemas[*].properties[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              type:
+                const: boolean
+          then:
+            properties:
+              nullable:
+                not:
+                  const: true
+              default:
+                not:
+                  const: null
+
+  Evitar palabras reservadas en propiedades:
+    description: Evitar palabras reservadas en propiedades (JavaScript completo)
+    message: '[Evitar palabras reservadas en propiedades] Verifica `components.schemas[*].properties`: el nombre de la propiedad coincide con una palabra reservada de JavaScript o un nombre problemático de API (`message`, `body`, `payload`, `class`, `default`, `function`, `null`, `true`, `false`, `return`, `var`, `let`, `const`, `new`, `this`, `typeof`, `delete`, `void`, `instanceof`, `in`, `if`, `else`, `for`, `while`, `do`, `break`, `continue`, `switch`, `case`, `throw`, `try`, `catch`, `finally`, `import`, `export`, `extends`, `super`, `yield`, `async`, `await`, `static`, `with`, `debugger`, `eval`, `arguments`, `prototype`, `constructor`). Usar estas palabras como claves JSON puede causar errores en parsers, serializers y runtimes JavaScript/TypeScript.'
+    severity: warn
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            not:
+              enum:
+              - message
+              - body
+              - payload
+              - class
+              - default
+              - function
+              - "null"
+              - "true"
+              - "false"
+              - var
+              - let
+              - const
+              - return
+              - if
+              - else
+              - for
+              - while
+              - do
+              - break
+              - continue
+              - switch
+              - case
+              - throw
+              - try
+              - catch
+              - finally
+              - with
+              - debugger
+              - typeof
+              - delete
+              - void
+              - instanceof
+              - in
+              - new
+              - this
+              - extends
+              - super
+              - import
+              - export
+              - static
+              - yield
+              - async
+              - await
+              - eval
+              - arguments
+              - prototype
+              - constructor
+  Keys de mensajes de canal terminan en `.message`:
+    description: Keys de mensajes de canal terminan en `.message`
+    message: '[Keys de mensajes de canal terminan en `.message`] (Keys de mensajes de canal terminan en `.message`) Verifica `channels.<canal>.messages` keys: deben terminar en `.message` (ej. `sendCreatedPudo.message`).'
+    severity: warn
+    given: $.channels[*].messages
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: ^.+\.message$
+  Documento YAML/JSON parseable:
+    description: Documento YAML/JSON parseable
+    message: '[Documento YAML/JSON parseable] (Documento YAML/JSON parseable) Verifica que el archivo sea YAML/JSON válido (sin tabs, sin caracteres inválidos) y que el documento raíz sea un objeto.'
+    severity: error
+    given: $
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+  Descripción de la API presente:
+    description: Descripción de la API presente
+    message: '[Descripción de la API presente] (Descripción de la API presente) Verifica `info.description`: recomendado no vacío para explicar propósito y alcance del contrato.'
+    severity: warn
+    given: $.info.description
+    then:
+      function: truthy
+  Descripción de canales presente:
+    description: Descripción de canales presente
+    message: '[Descripción de canales presente] (Descripción de canales presente) Verifica `channels.<canal>.description`: recomendado no vacío (qué evento representa, quién publica/consume).'
+    severity: warn
+    given: $.channels[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - description
+          properties:
+            description:
+              type: string
+              minLength: 1
+  Operación con summary:
+    description: Operación con summary
+    message: '[Operación con summary] (Operación con summary) Verifica `operations.<op>.summary`: recomendado no vacío (acción clara).'
+    severity: warn
+    given: $.operations[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - summary
+          properties:
+            summary:
+              type: string
+              minLength: 1
+  Operación con description:
+    description: Operación con description
+    message: '[Operación con description] (Operación con description) Verifica `operations.<op>.description`: recomendado no vacío (detalle de uso, consideraciones, etc.).'
+    severity: warn
+    given: $.operations[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - description
+          properties:
+            description:
+              type: string
+              minLength: 1
+
+  Message Traits corporativos aplicados en cada mensaje:
+    description: Message Traits corporativos aplicados en cada mensaje
+    message: '[Message Traits corporativos aplicados en cada mensaje] (Message Traits corporativos aplicados en cada mensaje) Verifica `components.messages.<msg>.traits`: cada mensaje debe declarar `traits` y referenciar (vía `$ref`) los 4 traits corporativos: commonHeaders, transportHeaders, businessHeaders, trackingHeaders (independiente del orden).'
+    severity: error
+    resolved: false
+    given: $.components.messages[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - traits
+          properties:
+            traits:
+              type: array
+              minItems: 4
+              items:
+                type: object
+                required:
+                - $ref
+                properties:
+                  $ref:
+                    type: string
+              allOf:
+              - contains:
+                  properties:
+                    $ref:
+                      pattern: commonHeaders$
+              - contains:
+                  properties:
+                    $ref:
+                      pattern: transportHeaders$
+              - contains:
+                  properties:
+                    $ref:
+                      pattern: businessHeaders$
+              - contains:
+                  properties:
+                    $ref:
+                      pattern: trackingHeaders$
+
+  'transportHeaders: channel requerido':
+    description: 'transportHeaders: channel requerido'
+    message: '[transportHeaders: channel requerido] (transportHeaders: channel requerido) Verifica `transportHeaders.headers.required`: debe contener `channel`.'
+    severity: error
+    given: $.components.messageTraits.transportHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - required
+          properties:
+            required:
+              type: array
+              allOf:
+              - contains:
+                  const: channel
+
+  'trackingHeaders: traceId/spanId requeridos':
+    description: 'trackingHeaders: traceId/spanId requeridos'
+    message: '[trackingHeaders: traceId/spanId requeridos] (trackingHeaders: traceId/spanId requeridos) Verifica `trackingHeaders.headers.required`: debe contener `traceId` y `spanId`.'
+    severity: error
+    given: $.components.messageTraits.trackingHeaders.headers
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required:
+          - required
+          properties:
+            required:
+              type: array
+              allOf:
+              - contains:
+                  const: traceId
+              - contains:
+                  const: spanId
+
+  Claves sin caracteres Unicode no imprimibles:
+    description: Claves sin caracteres Unicode no imprimibles
+    message: '[Claves sin caracteres Unicode no imprimibles] Verifica `components.schemas[*].properties`: las keys NO deben contener caracteres de control Unicode (U+0000-U+001F, U+007F) ni ser cadenas vacías. Estos caracteres son invisibles, rompen SDKs de generación de código y producen comportamientos indefinidos en parsers JavaScript. Solo se permiten caracteres ASCII imprimibles (U+0020-U+007E) en nombres de propiedades.'
+    severity: error
+    given: $.components.schemas[*].properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: "^[\\x20-\\x7E]+$"
+            minLength: 1
